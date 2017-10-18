@@ -398,7 +398,8 @@ DESCEND.control <- function(n.points = 50,
        only.integer = only.integer)
 }
 
-
+#' An S4 class object containing the DESCEND result for a single gene
+#'
 #' @export DESCEND
 #' @exportClass DESCEND
 

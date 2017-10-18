@@ -1,8 +1,8 @@
 Package: descend
 Title: Gene Expression Distribution Deconvolution for Single Cell RNA-seq
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Jingshu", "Wang", email = "jingshuw@upenn.edu", role = c("aut", "cre"))
+Description: DESCEND deconvolves the true gene expression distribution across cells for UMI scRNA-seq counts. It provides estimates of several distribution based statistics (five distribution measurements and the coefficients of covariates). Based on the estimation, DESCEND also can perform highly variable selection and differential testing of dispersion and burstiness measurements between two groups of cells.
 Depends: R (>= 3.3.0)
 License: What license is it under?
 Encoding: UTF-8
