@@ -1,10 +1,10 @@
 #' Base function of G-modeling deconvolution
 #'
 #' Base function used by \code{\link{deconvSingle}} to deconvolve the underlying distribution. 
-#' We assume X \sim F(T) where F is the noise distribution. We assume that 
-#' \deqn{log(T) = offset + \gammaZ + \epsilon}
-#' \deqn{P(T = 0) = \beta_0 + \beta_1Z0}
-#' The goal is the recover the distribution of exp(log(T) - offset - \gammaZ), which has density g and is discretized at exp(tau) (add 0 when zero inflation is allowed).
+#' We assume X ~ F(T) where F is the noise distribution. We assume that 
+#' \deqn{log(T) = offset + \gamma Z + \epsilon}
+#' \deqn{P(T = 0) = \beta_0 + \beta_1 Z0}
+#' The goal is the recover the distribution of exp(log(T) - offset - gamma Z), which has density g and is discretized at exp(tau) (add 0 when zero inflation is allowed).
 #'
 #' @param tau log of the discrete points of the deconvolved distribution
 #' @param X a vector of observed counts 

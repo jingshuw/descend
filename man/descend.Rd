@@ -2,7 +2,7 @@
 % Please edit documentation in R/descend.R
 \name{descend}
 \alias{descend}
-\title{Default is to set max.quantile = max.sparse = 0.98. For those that are too sparse, set max.quantile = max.sparse = 0.99 and try again.}
+\title{Apply descend to each gene of the count matrix}
 \usage{
 descend(count.matrix, scaling.consts = NULL, Z = NULL, Z0 = NULL,
   n.cores = 1, cl = NULL, do.LRT.test = F, family = c("Poisson",
@@ -35,5 +35,5 @@ descend(count.matrix, scaling.consts = NULL, Z = NULL, Z0 = NULL,
 a list of DESCEND objects
 }
 \description{
-Default is to set max.quantile = max.sparse = 0.98. For those that are too sparse, set max.quantile = max.sparse = 0.99 and try again.
+Apply descend to each gene of the count matrix
 }

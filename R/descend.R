@@ -1,4 +1,4 @@
-#' Default is to set max.quantile = max.sparse = 0.98. For those that are too sparse, set max.quantile = max.sparse = 0.99 and try again.
+#' Apply descend to each gene of the count matrix 
 #'
 #' @inheritParams deconvSingle
 #' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell
@@ -88,7 +88,7 @@ descend <- function(count.matrix,
   return(results)
 }
 
-#' Grep the value and standard deviation of the estimated parameters calculated from a list of descend objects 
+#' Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects 
 #'
 #' @param descend.list a list of descend objects
 #' 
@@ -128,6 +128,12 @@ getEstimates <- function(descend.list) {
   return(est.list)
 }
 
+#' Grab the likelihood ratio test p-values of the coefficients and active fraction is the tests are performed from a list of descend objects 
+#'
+#' @param descend.list a list of descend objects
+#' 
+#' @export
+
 getPval <- function(descend.list) {
   temp <- lapply(descend.list, function(ll) {
                       if (class(ll) == "DESCEND")
@@ -138,8 +144,10 @@ getPval <- function(descend.list) {
 
   idx <- which(!sapply(temp, is.na))[1]
   n.test <- nrow(temp[[idx]])
-  if (n.test == 0) 
+  if (n.test == 0) {
+    print("The likelihood ratio tests were not performed")
     return(NA)
+  }
   test.names <- rownames(temp[[idx]])
   report.names <- colnames(temp[[idx]])
 
@@ -161,3 +169,73 @@ getPval <- function(descend.list) {
   return(test.result)
 
 }
+
+#' Finding highly variable genes (HVG) based on Gini coefficients or CV
+#'
+#' The function finds highly variable genes based on the Gini or CV estimates from DESCEND. A quantile natural cubic spline regression of the estimated selected criteria on the log of the estimated mean for the genes is performed as the general trend. HVGs are selected as the genes whose normalized difference between its estimates and the trend is larger than a threshold.
+#'
+#' @inheritParams getEstimates
+#' @param criteria the cirteria of HVG finding, either "Gini" or "CV"
+#' @param quantile quantile of the quantile regression. Defined as the \code{tau} parameter in the function \code{\link[quantreg]{rqss}}. A larger quantile yields a more stringent selection of HVG. Default is 0.7.
+#' @param threshold threshold of the normalized difference for HVG selection. Default is 3. A larger value results in a more stringent selection
+#' @param plot.result whether plot the selection results or not. Default is TRUE.
+#'
+#' @return A list of elements:
+#' \item{score.mat}{A score matrix of the genes. Each row is a gene}
+#' \item{HVG.genes}{A vector of the selected HVG gene names}
+#'
+#' @export 
+
+
+findHVG <- function(descend.list, 
+                    criteria = c("Gini", "CV"),
+                    quantile = 0.7,
+                    threshold = 3,
+                    plot.result = T) {
+  require(quantreg)
+  require(splines)
+  cirteria <- match.arg(criteria, c("Gini", "CV"))
+  ests <- getEstimates(descend.list)
+  x <- log(ests$Mean[, 1])
+  if (cirteria == "Gini") {
+    y <- ests$Gini[, 1]
+    sd <- ests$Gini[, 2]
+  } else {
+    y <- ests$CV[, 1]
+    sd <- ests$CV[, 2]
+  }
+  if (plot.result)
+    plot(x, y, pch = 20, col = rgb(0, 0, 0, 0.4),
+         xlab = "log Mean Relative Expression", ylab = paste("Estimated", criteria), 
+         main = "HVG selection by DESCEND", cex.lab = 1.3, cex.axis = 1.1, cex.main = 1.3, font.main = 1)
+
+  idx <- !is.na(x)
+
+  X <- model.matrix(y[idx] ~ bs(x[idx], df = 10))
+  temp <- rqss(y[idx] ~ bs(x[idx], df = 10), tau = quantile)
+  y.pred <- X %*% temp$coef
+  x1 <- x[idx]
+  ix <- sort(x1, index.return = T)$ix
+
+  if (plot.result)
+    points(x1[ix], y.pred[ix], type = "l", col = "blue", lwd = 2)
+
+  score <- cbind(y[idx] - y.pred, (y[idx] - y.pred)/sd[idx])
+  rownames(score) <- names(x[idx])
+  colnames(score) <- c("Difference", "Normalized Difference")
+
+  sel.genes <- score[score[, 2] > threshold, ]
+  sel.genes <- sel.genes[order(sel.genes[, 2], decreasing = T), ]
+
+  sel.gene.names <- rownames(sel.genes)
+
+
+
+  points(x[sel.gene.names], 
+         y[sel.gene.names], col = rgb(1, 0, 0, 0.6), pch = 20)
+
+  
+  return(list(score.mat = score, HVG.genes = sel.gene.names))
+
+}
+

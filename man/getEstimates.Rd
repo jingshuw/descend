@@ -2,7 +2,7 @@
 % Please edit documentation in R/descend.R
 \name{getEstimates}
 \alias{getEstimates}
-\title{Grep the value and standard deviation of the estimated parameters calculated from a list of descend objects}
+\title{Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects}
 \usage{
 getEstimates(descend.list)
 }
@@ -10,5 +10,5 @@ getEstimates(descend.list)
 \item{descend.list}{a list of descend objects}
 }
 \description{
-Grep the value and standard deviation of the estimated parameters calculated from a list of descend objects
+Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects
 }
