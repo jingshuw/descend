@@ -4,7 +4,8 @@
 #' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell
 #' @param n.cores the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly
 #' @param cl an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}
-#' 
+#'
+#'
 #' @return a list of DESCEND objects
 #'
 #'
