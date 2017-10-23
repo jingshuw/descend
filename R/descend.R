@@ -7,6 +7,7 @@
 #' 
 #' @return a list of DESCEND objects
 #'
+#'
 #' @export
 
 descend <- function(count.matrix,
