@@ -1,17 +1,22 @@
-#' Apply descend to each gene of the count matrix 
+#' Apply DESCEND to all the genes in the count matrix for one cell population
+#'
+#' Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed.
 #'
 #' @inheritParams deconvSingle
-#' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell
+#' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.
+#' @param ercc.matrix the ERCC spike-ins are used for computing the cell-specific efficiency constants as \code{scaling.consts} when \code{scaling.consts} is NULL. Each row is a spike-in genes and each column is a cell. The number and order of the columns should be the same as the number and order of the columns of \code{count.matrix}.
+#' @param ercc.trueMol the true input number of molecules of the ercc spike-ins when \code{ercc.matrix} is not NULL.
 #' @param n.cores the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly
 #' @param cl an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}
 #'
 #'
-#' @return a list of DESCEND objects
+#' @return a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution.
 #'
 #'
 #' @export
 
 descend <- function(count.matrix,
+                    ercc.matrix = NULL,
                     scaling.consts = NULL,
                     Z = NULL,
                     Z0 = NULL,
@@ -20,22 +25,52 @@ descend <- function(count.matrix,
                     family = c("Poisson", "Negative Binomial"),
                     NB.size = 100,
                     verbose = T, 
+                    ercc.trueMol = NULL,
                     control = list()) {
 
    control <- do.call("DESCEND.control", control)
 
   Y <- as.matrix(count.matrix)
   gene.names <- rownames(Y)
+  if (sum(is.na(Y)) > 0)
+    stop("Missing values in count.matrix are not allowed!")
 
-  print(paste("DESCEND starts deconvolving distribution of", length(gene.names), "genes!"))
+  if (sum(Y < 0) > 0 || sum(abs(Y - round(Y))) > 0)
+    stop("The data input should be raw UMI counts!!")
+
+
+  if (is.null(scaling.consts)) {
+    if (is.null(ercc.matrix) || is.null(ercc.trueMol)) {
+      if (!is.null(ercc.matrix))
+        print("The input number of molecules for the ERCC spike-in genes are not provided, library size normalization is used instead.")
+
+      scaling.consts <- colSums(Y)
+    }
+    else {
+      if (sum(is.na(ercc.matrix)) > 0)
+        stop("Missing values in ercc.matrix are not allowed!")
+
+      if (sum(ercc.matrix < 0) > 0 || 
+          sum(abs(ercc.matrix - round(ercc.matrix))) > 0)
+        stop("The ERCC input should be raw UMI counts!!")
+
+      if (ncol(Y) != ncol(ercc.matrix))
+        stop("The ERCC matrix should have the same number and order of the columns as the count matrix!")
+      scaling.consts <- colSums(ercc.matrix) / sum(ercc.trueMol)
+    }
+  }
+
+  print(paste("DESCEND starts deconvolving distribution of", 
+              length(gene.names), "genes!"))
 
   if (is.null(cl)) {
     require(doParallel)
     registerDoParallel(n.cores)
+    print(paste(n.cores, "cores are used in parallel."))
 
     results <-  foreach(v = iter(Y, "row"), .noexport = c("Y")) %dopar% {
       if (verbose)
-        print("Compute for gene")
+        print("Start computing for one gene!")
       if (mean(v == 0) > control$max.sparse) {
         control$max.quantile <- 0.99
         control$max.sparse <- 0.99
@@ -61,11 +96,11 @@ descend <- function(count.matrix,
 
     results <- parLapply(cl, Y, function(v) {
 
-                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/deconvSingle.R")
-                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/g_model.R")
+                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/descend/R/deconvSingle.R")
+                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/descend/R/g_model.R")
 
                          if ("logMsg" %in% ls())
-                           logMsg(do.LRT.test)
+                         try(logMsg("Start computing for one gene!"))
 
                          if (mean(v == 0) > control$max.sparse) {
                            control$max.quantile <- 0.99
@@ -90,9 +125,10 @@ descend <- function(count.matrix,
   return(results)
 }
 
-#' Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects 
+#' Grab the value and standard deviation of the estimated DESCEND elements calculated from a list of descend objects 
 #'
-#' @param descend.list a list of descend objects
+#' @param descend.list a list of descend objects computed from {\code{\link{descend}}}
+#' @return A list of matrices where each element is for a distribution measurement or a coefficient if covariates are presented. For each distribution measurement or coefficient, the matrix contains two columns. Each row is for a gene. The first column is the estimated value and second value is the estimated standard deviation.
 #' 
 #' @export
 
@@ -130,9 +166,11 @@ getEstimates <- function(descend.list) {
   return(est.list)
 }
 
-#' Grab the likelihood ratio test p-values of the coefficients and active fraction is the tests are performed from a list of descend objects 
+#' Grab the likelihood ratio test p-values if the tests are performed from a list of descend objects 
 #'
-#' @param descend.list a list of descend objects
+#' @inheritParams getEstimates
+#'
+#' @return A matrix of one column. Each row is for a distribution measurement or a coefficient if covariates are presented. 
 #' 
 #' @export
 
@@ -193,13 +231,13 @@ findHVG <- function(descend.list,
                     criteria = c("Gini", "CV"),
                     quantile = 0.7,
                     threshold = 3,
-                    plot.result = T) {
+                    plot.result = T, spline.df = 5) {
   require(quantreg)
   require(splines)
-  cirteria <- match.arg(criteria, c("Gini", "CV"))
+  criteria <- match.arg(criteria, c("Gini", "CV"))
   ests <- getEstimates(descend.list)
   x <- log(ests$Mean[, 1])
-  if (cirteria == "Gini") {
+  if (criteria == "Gini") {
     y <- ests$Gini[, 1]
     sd <- ests$Gini[, 2]
   } else {
@@ -213,8 +251,8 @@ findHVG <- function(descend.list,
 
   idx <- !is.na(x)
 
-  X <- model.matrix(y[idx] ~ bs(x[idx], df = 10))
-  temp <- rqss(y[idx] ~ bs(x[idx], df = 10), tau = quantile)
+  X <- model.matrix(y[idx] ~ bs(x[idx], df = spline.df))
+  temp <- rqss(y[idx] ~ bs(x[idx], df = spline.df), tau = quantile)
   y.pred <- X %*% temp$coef
   x1 <- x[idx]
   ix <- sort(x1, index.return = T)$ix

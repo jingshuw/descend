@@ -2,13 +2,16 @@
 % Please edit documentation in R/descend.R
 \name{getPval}
 \alias{getPval}
-\title{Grab the likelihood ratio test p-values of the coefficients and active fraction is the tests are performed from a list of descend objects}
+\title{Grab the likelihood ratio test p-values if the tests are performed from a list of descend objects}
 \usage{
 getPval(descend.list)
 }
 \arguments{
-\item{descend.list}{a list of descend objects}
+\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
+}
+\value{
+A matrix of one column. Each row is for a distribution measurement or a coefficient if covariates are presented.
 }
 \description{
-Grab the likelihood ratio test p-values of the coefficients and active fraction is the tests are performed from a list of descend objects
+Grab the likelihood ratio test p-values if the tests are performed from a list of descend objects
 }

@@ -1,6 +1,6 @@
 #' Deconvolve the true gene expression distribution  of a single gene
 #'
-#' The deconvolution is computed by using the function \code{deconvG}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
+#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
 #'
 #' @param y a vector of observed counts of a single gene
 #' @param scaling.consts a vector of cell specific scaling constants, either the cell efficiency or the library size
@@ -321,7 +321,7 @@ deconvSingle <- function(y,
                    if (k == 1)
                      df <- NA
                    if (verbose)
-                     print(paste("neg loglikehod is ", as.numeric(val), 
+                     print(paste("neg loglikehood is ", as.numeric(val), 
                                  "df is ", df))
                    return(c(as.numeric(val), max(1, p - ll[[4]])))
     })

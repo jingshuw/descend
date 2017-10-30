@@ -33,5 +33,5 @@ deconvSingle(y, scaling.consts = NULL, Z = NULL, Z0 = NULL,
 a DESCEND object
 }
 \description{
-The deconvolution is computed by using the function \code{deconvG}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
+The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
 }

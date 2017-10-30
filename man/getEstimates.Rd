@@ -2,13 +2,16 @@
 % Please edit documentation in R/descend.R
 \name{getEstimates}
 \alias{getEstimates}
-\title{Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects}
+\title{Grab the value and standard deviation of the estimated DESCEND elements calculated from a list of descend objects}
 \usage{
 getEstimates(descend.list)
 }
 \arguments{
-\item{descend.list}{a list of descend objects}
+\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
+}
+\value{
+A list of matrices where each element is for a distribution measurement or a coefficient if covariates are presented. For each distribution measurement or coefficient, the matrix contains two columns. Each row is for a gene. The first column is the estimated value and second value is the estimated standard deviation.
 }
 \description{
-Grab the value and standard deviation of the estimated parameters calculated from a list of descend objects
+Grab the value and standard deviation of the estimated DESCEND elements calculated from a list of descend objects
 }

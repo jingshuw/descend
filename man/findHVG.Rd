@@ -5,10 +5,10 @@
 \title{Finding highly variable genes (HVG) based on Gini coefficients or CV}
 \usage{
 findHVG(descend.list, criteria = c("Gini", "CV"), quantile = 0.7,
-  threshold = 3, plot.result = T)
+  threshold = 3, plot.result = T, spline.df = 5)
 }
 \arguments{
-\item{descend.list}{a list of descend objects}
+\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
 
 \item{criteria}{the cirteria of HVG finding, either "Gini" or "CV"}
 
