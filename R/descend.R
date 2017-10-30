@@ -13,20 +13,22 @@
 #' @return a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution.
 #'
 #'
-#' @export
+#' @import doParallel
+#' @import parallel
+#' @export runDescend
 
-descend <- function(count.matrix,
-                    ercc.matrix = NULL,
-                    scaling.consts = NULL,
-                    Z = NULL,
-                    Z0 = NULL,
-                    n.cores = 1, cl = NULL,
-                    do.LRT.test = F, 
-                    family = c("Poisson", "Negative Binomial"),
-                    NB.size = 100,
-                    verbose = T, 
-                    ercc.trueMol = NULL,
-                    control = list()) {
+runDescend <- function(count.matrix,
+                       ercc.matrix = NULL,
+                       scaling.consts = NULL,
+                       Z = NULL,
+                       Z0 = NULL,
+                       n.cores = 1, cl = NULL,
+                       do.LRT.test = F, 
+                       family = c("Poisson", "Negative Binomial"),
+                       NB.size = 100,
+                       verbose = T, 
+                       ercc.trueMol = NULL,
+                       control = list()) {
 
    control <- do.call("DESCEND.control", control)
 
@@ -64,7 +66,7 @@ descend <- function(count.matrix,
               length(gene.names), "genes!"))
 
   if (is.null(cl)) {
-    require(doParallel)
+    requireNamespace(doParallel)
     registerDoParallel(n.cores)
     print(paste(n.cores, "cores are used in parallel."))
 
@@ -91,14 +93,12 @@ descend <- function(count.matrix,
 
   } else if (!is.null(cl)) {
     Y <- as.list(as.data.frame(t(Y)))
-    clusterExport(cl, c("scaling.consts", "Z", "Z0", "do.LRT.test", "family", "NB.size",
-                        "control"), environment())
+    parallel::clusterExport(cl, c("scaling.consts", "Z", "Z0", "do.LRT.test", "family", "NB.size",
+                                  "control"), environment())
 
     results <- parLapply(cl, Y, function(v) {
 
-                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/descend/R/deconvSingle.R")
-                         source("~/Dropbox/sparse_factor_bic/code/g_model/package_code/descend/R/g_model.R")
-
+                         requireNamespace(descend)
                          if ("logMsg" %in% ls())
                          try(logMsg("Start computing for one gene!"))
 
@@ -107,14 +107,14 @@ descend <- function(count.matrix,
                            control$max.sparse <- 0.99
                          }
 
-                         temp <- try(deconvSingle(v,
-                                                  scaling.consts = scaling.consts,
-                                                  Z = Z, Z0 = Z0,
-                                                  plot.density = F,
-                                                  do.LRT.test = do.LRT.test,
-                                                  family = family, 
-                                                  NB.size = NB.size,
-                                                  control = control, verbose = F))
+                         temp <- try(descend::deconvSingle(v,
+                                                           scaling.consts = scaling.consts,
+                                                           Z = Z, Z0 = Z0,
+                                                           plot.density = F,
+                                                           do.LRT.test = do.LRT.test,
+                                                           family = family, 
+                                                           NB.size = NB.size,
+                                                           control = control, verbose = F))
                          if (class(temp) == "try-error")
                            return(NA)
                          return(temp)
@@ -127,7 +127,7 @@ descend <- function(count.matrix,
 
 #' Grab the value and standard deviation of the estimated DESCEND elements calculated from a list of descend objects 
 #'
-#' @param descend.list a list of descend objects computed from {\code{\link{descend}}}
+#' @param descend.list a list of descend objects computed from {\code{\link{runDescend}}}
 #' @return A list of matrices where each element is for a distribution measurement or a coefficient if covariates are presented. For each distribution measurement or coefficient, the matrix contains two columns. Each row is for a gene. The first column is the estimated value and second value is the estimated standard deviation.
 #' 
 #' @export
@@ -193,7 +193,7 @@ getPval <- function(descend.list) {
 
   temp <- lapply(temp, function(mat) {
                       if (is.na(mat[1])) {
-                        mm <- matrix(NA, n.est, 1)
+                        mm <- matrix(NA, n.test, 1)
                         colnames(mm) <- report.names
                         rownames(mm) <- test.names
                       }
@@ -219,11 +219,15 @@ getPval <- function(descend.list) {
 #' @param quantile quantile of the quantile regression. Defined as the \code{tau} parameter in the function \code{\link[quantreg]{rqss}}. A larger quantile yields a more stringent selection of HVG. Default is 0.7.
 #' @param threshold threshold of the normalized difference for HVG selection. Default is 3. A larger value results in a more stringent selection
 #' @param plot.result whether plot the selection results or not. Default is TRUE.
+#' @param spline.df the degree of freedom of the spline functions used to fit the quantile regression curve
 #'
 #' @return A list of elements:
 #' \item{score.mat}{A score matrix of the genes. Each row is a gene}
 #' \item{HVG.genes}{A vector of the selected HVG gene names}
 #'
+#' @import quantreg
+#' @import splines
+#' @import grDevices
 #' @export 
 
 
@@ -232,8 +236,8 @@ findHVG <- function(descend.list,
                     quantile = 0.7,
                     threshold = 3,
                     plot.result = T, spline.df = 5) {
-  require(quantreg)
-  require(splines)
+  requireNamespace(quantreg)
+  requireNamespace(splines)
   criteria <- match.arg(criteria, c("Gini", "CV"))
   ests <- getEstimates(descend.list)
   x <- log(ests$Mean[, 1])
@@ -245,7 +249,7 @@ findHVG <- function(descend.list,
     sd <- ests$CV[, 2]
   }
   if (plot.result)
-    plot(x, y, pch = 20, col = rgb(0, 0, 0, 0.4),
+    plot(x, y, pch = 20, col = grDevices::rgb(0, 0, 0, 0.4),
          xlab = "log Mean Relative Expression", ylab = paste("Estimated", criteria), 
          main = "HVG selection by DESCEND", cex.lab = 1.3, cex.axis = 1.1, cex.main = 1.3, font.main = 1)
 
@@ -272,7 +276,7 @@ findHVG <- function(descend.list,
 
 
   points(x[sel.gene.names], 
-         y[sel.gene.names], col = rgb(1, 0, 0, 0.6), pch = 20)
+         y[sel.gene.names], col = grDevices::rgb(1, 0, 0, 0.6), pch = 20)
 
   
   return(list(score.mat = score, HVG.genes = sel.gene.names))

@@ -7,7 +7,8 @@
 #' The goal is the recover the distribution of exp(log(T) - offset - gamma Z), which has density g and is discretized at exp(tau) (add 0 when zero inflation is allowed).
 #'
 #' @param tau log of the discrete points of the deconvolved distribution
-#' @param X a vector of observed counts 
+#' @param X a vector of observed counts
+#' @param offset a vector with the same length as \code{X}. See details
 #' @param family family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter
 #' @param ignoreZero whether ignore the zero count. If true, then use truncated Poisson / Negative Binomial distribution. Default is False
 #' @param zeroInflate whether add zero inflation part to the deconvolved distribution to reflect transcriptional bursting. Default is True. 
@@ -34,6 +35,7 @@
 #' \item{statsFunction}{the function computing the relavant statistics}
 #'
 #' @note This is an extension of the G-modeling package
+#' @import stats
 #' @export
 
 deconvG <- 

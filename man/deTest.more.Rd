@@ -21,6 +21,8 @@ deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
 
 \item{N.more.genes}{number of more permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be}
 
+\item{alternative}{the alternative hypotheses for differential testing}
+
 \item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}

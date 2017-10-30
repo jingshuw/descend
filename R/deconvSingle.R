@@ -5,12 +5,13 @@
 #' @param y a vector of observed counts of a single gene
 #' @param scaling.consts a vector of cell specific scaling constants, either the cell efficiency or the library size
 #' @inheritParams deconvG
-#' @param whether plot the density curve of the deconvolved the distribution or not. The zero inflation part has been smoothed into the density curve for visualization. Default is True.
+#' @param plot.density whether plot the density curve of the deconvolved the distribution or not. The zero inflation part has been smoothed into the density curve for visualization. Default is True.
 #' @param do.LRT.test whether do LRT test on the coefficients and active fraction or not. Default is True
 #' @param verbose verbose the estimation and testing procedures or not. Default is True.
-#' @param control settings see see {\code{\link{deconv.control}}}
+#' @param control settings see {\code{\link{DESCEND.control}}}
 #'
-#' @return a DESCEND object
+#' @return a DESCEND object. See also \code{\link{DESCEND}}
+#' @import graphics
 #' @export
 
 
@@ -355,12 +356,44 @@ deconvSingle <- function(y,
   return(result)
 }
 
-#' The control parameters of the function \code{\link{descend}} and \code{\link{deconvSingle}}
+#' The control parameters of the function \code{\link{runDescend}} and \code{\link{deconvSingle}}
+#'
+#' @param n.points number of discritized points of the underlying true expression distribution. Default is 50
+#' @param nStart number of random starts for the optimization problem (as it is non-convex) to find the global minimum. Default is 2
+#' @param nStart.lrt number of random starts for the unpenalized optimization problem for likelihood ratio testing
+#' @param max.quantile the maximum quantile of the observed counts used for finding the range of the underlying true expression distribution. Default is 0.98
+#' @param max.sparse the maximum sparsity allowed (fraction of zero count entries) for a gene to be computed. Default is 0.95
+#' @param LRT.Z.select a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
+#' @param LRT.Z0.select a vector of length 1 or the number of columns of \code{Z0} indicating for which column of \code{Z0} the coefficients are tested against 0 using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
+#' @param LRT.Z.values a vector of length 1 or the number of columns of \code{Z} showing the values that LRT tests on coefficients of \code{Z} are tested against. Default value is 0, meanings that all tests are tested against 0.
+#' @param zeroInflate whether to include the zero inflation part to the deconvolved distribution. Default is TRUE
+#' @param dense.add.0 whether smooth the density at 0 into \code{density.points} in the output DESCEND object
+#' @param only.integer whether set the discrete points to be integers. Default is FALSE
+#' @param rel.info.range the relative information range allowed for finding the optimal tuning parameter \code{c0}
+#' @param rel.info.guide one parameter inside the \code{rel.info.range} controling for the searching process of \code{c0}
+#' @param c0.start the starting value of \code{c0}. Default is 1
+#' @param aStart the starting values of the spline coefficients of the deconvolved distribution
+#' @param bStart the starting values of the coefficients of Z0
+#' @param gStart the starting values of the coefficients of Z
+#' @param start.sd standard deviation of the random starting values when nStart > 1
+#' @param penalty.Z0 whether add penalty to the coefficients of Z0 or not in optimization. Default is TRUE
+#' @param pDegree degree of the spline bases. Default is 5
+#' @param max.c0.iter maximum iteration allowed to find the optimal \code{c0}
+#' @param c0.min minimum \code{c0} allowed to avoid degeneration
+#'
+#' @export
+
 DESCEND.control <- function(n.points = 50,
                             nStart = 2,
                             nStart.lrt = 2,
                             max.quantile = 0.98,
                             max.sparse = 0.95,
+                            LRT.Z.select = T,
+                            LRT.Z0.select = T,
+                            LRT.Z.values = 0,
+                            zeroInflate = T,
+                            dense.add.0 = T,
+                            only.integer = F,
                             rel.info.range = c(0.0005, 0.01),
                             rel.info.guide = 0.005,
                             c0.start = 1,
@@ -371,13 +404,7 @@ DESCEND.control <- function(n.points = 50,
                             penalty.Z0 = T,
                             pDegree = 5,
                             max.c0.iter = 5,
-                            c0.min = 1e-5,
-                            LRT.Z.select = T,
-                            LRT.Z0.select = T,
-                            LRT.Z.values = 0,
-                            zeroInflate = T,
-                            dense.add.0 = T,
-                            only.integer = F) {
+                            c0.min = 1e-5) {
 
 
   n.points <- max(n.points, 10)
@@ -399,13 +426,27 @@ DESCEND.control <- function(n.points = 50,
 }
 
 #' An S4 class object containing the DESCEND result for a single gene
+#' 
+#' The DESCEND class is a container to store the DESCEND result for a single gene. 
 #'
-#' @export DESCEND
+#' @section Slots:
+#' \describe{
+#' \item{\code{distribution}}{The distribution of the deconvolved distribution with relative statistics}
+#' \item{\code{estimates}}{The matrix of distribution measurements and coefficients estimated values, bias and standard deviation}
+#' \item{\code{pval}}{The p values of the likelihood ratio tests if computed}
+#' \item{\code{density.points}}{Smoothed version of the distribution for easier plotting of the distribution}
+#' }
+#'
+#' @import methods
+#' @name DESCEND
+#' @rdname DESCEND
+#' @aliases DESCEND-class
+#' @author Jingshu Wang
 #' @exportClass DESCEND
 
 require(methods)
 
-setClass("DESCEND", representation(distribution = "matrix", 
+methods::setClass("DESCEND", representation(distribution = "matrix", 
                                    estimates = "matrix", 
                                    pval = "matrix", 
                                    density.points = "matrix"))

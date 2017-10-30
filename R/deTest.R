@@ -2,11 +2,12 @@
 #'
 #' This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction.
 #'
-#' @inheritParams descend
+#' @inheritParams runDescend
 #' @param labels a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}
+#' @param center.Z0 whether to center Z0 to make \code{Z0} adjusted active fraction more meaningful. Default is TRUE 
 #'
 #' @return a list with elements
-#' \item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{descend}.}
+#' \item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{runDescend}.}
 #' \item{model}{model parameters, including the actual \code{scaling.consts}, \code{Z}, the rescaled \code{Z0}, \code{control}, \code{family} and \code{NB.size}}
 #'
 #' @export
@@ -48,7 +49,7 @@ descendMultiPop <- function(count.matrix,
       if (!is.null(ercc.matrix))
         print("The input number of molecules for the ERCC spike-in genes are not provided, library size normalization is used instead.")
 
-      scaling.consts <- colSums(Y)
+      scaling.consts <- colSums(count.matrix, na.rm = T)
     }
     else {
       if (sum(is.na(ercc.matrix)) > 0)
@@ -58,7 +59,7 @@ descendMultiPop <- function(count.matrix,
           sum(abs(ercc.matrix - round(ercc.matrix))) > 0)
         stop("The ERCC input should be raw UMI counts!!")
 
-      if (ncol(Y) != ncol(ercc.matrix))
+      if (ncol(count.matrix) != ncol(ercc.matrix))
         stop("The ERCC matrix should have the same number and order of the columns as the count matrix!")
       scaling.consts <- colSums(ercc.matrix) / sum(ercc.trueMol)
     }
@@ -81,16 +82,16 @@ descendMultiPop <- function(count.matrix,
                               else
                                 Z0.temp <- NULL
 
-                              return(descend(count.matrix[, idx],
-                                             ercc.matrix = NULL,
-                                             scaling.consts = scaling.consts.temp,
-                                             Z = Z.temp,
-                                             Z0 = Z0.temp,
-                                             n.cores = n.cores, cl = cl, 
-                                             do.LRT.test = do.LRT.test,
-                                             family = family, NB.size = NB.size,
-                                             verbose = verbose, 
-                                             control = control))
+                              return(runDescend(count.matrix[, idx],
+                                                ercc.matrix = NULL,
+                                                scaling.consts = scaling.consts.temp,
+                                                Z = Z.temp,
+                                                Z0 = Z0.temp,
+                                                n.cores = n.cores, cl = cl, 
+                                                do.LRT.test = do.LRT.test,
+                                                family = family, NB.size = NB.size,
+                                                verbose = verbose, 
+                                                control = control))
                             })
   names(result.list) <- levels(labels)
 
@@ -102,7 +103,7 @@ descendMultiPop <- function(count.matrix,
                                              function(lll) {
                                         temp <- lll@estimates["Z0 effect: beta0", ]
                                         p0.adj <- exp(temp[1])/(1 + exp(temp[1]))
-                                        p0.adjbias <- temp[2] * p0.adj * 
+                                        p0.adj.bias <- temp[2] * p0.adj * 
                                           (1 - p0.adj)
                                         p0.adjsd <- temp[3] * p0.adj * (1 - p0.adj)
                                         temp <- c(p0.adj, p0.adj.bias, p0.adjsd)
@@ -125,12 +126,13 @@ descendMultiPop <- function(count.matrix,
 
 #' Perform differential testing of the distribution measurements between two cell populations
 #'
-#' Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.gene.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
+#' Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
 #'
 #' @inheritParams descendMultiPop
 #' @param descend.multipop.output the returned value of \code{\link{descendMultiPop}}
 #' @param de.pair.names a vector of length 2 showing the two cell population names for differential testing. The names should match the values in \code{labels}
 #' @param N.genes.null number of permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be (the minimum p-value can be as small as 0.5/N.genes.null)
+#' @param alternative the alternative hypotheses for differential testing
 #'
 #' @return a list with elements
 #' \item{p.values}{a matrix of p-values calculated from permutation tests. Each row is a gene and each column is a distribution measurement of coefficient (if \code{Z} or \code{Z0} is presented)}
@@ -161,7 +163,7 @@ deTest <- function(descend.multipop.output,
   perm.result1 <- list()
   perm.result2 <- list()
 
-  print(paste("To get", N.gene.null, "permuted genes, total number of permutation rounds is", n.perm.rounds))
+  print(paste("To get", N.genes.null, "permuted genes, total number of permutation rounds is", n.perm.rounds))
 
   for(i in 1:n.perm.rounds) {
     print(paste("Permutation to compute the null distribution, round", i))

@@ -19,6 +19,8 @@ deTest(descend.multipop.output, de.pair.names, count.matrix, labels,
 
 \item{N.genes.null}{number of permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be (the minimum p-value can be as small as 0.5/N.genes.null)}
 
+\item{alternative}{the alternative hypotheses for differential testing}
+
 \item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}
@@ -32,5 +34,5 @@ a list with elements
 \item{perm.scores}{the permuted z-scores matrix used as the null distribution of the z-scores in each column. The number of rows equals to \code{N.genes.null}}
 }
 \description{
-Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.gene.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
+Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
 }

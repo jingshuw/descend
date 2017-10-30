@@ -2,15 +2,61 @@
 % Please edit documentation in R/deconvSingle.R
 \name{DESCEND.control}
 \alias{DESCEND.control}
-\title{The control parameters of the function \code{\link{descend}} and \code{\link{deconvSingle}}}
+\title{The control parameters of the function \code{\link{runDescend}} and \code{\link{deconvSingle}}}
 \usage{
 DESCEND.control(n.points = 50, nStart = 2, nStart.lrt = 2,
-  max.quantile = 0.98, max.sparse = 0.95, rel.info.range = c(5e-04, 0.01),
+  max.quantile = 0.98, max.sparse = 0.95, LRT.Z.select = T,
+  LRT.Z0.select = T, LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T,
+  only.integer = F, rel.info.range = c(5e-04, 0.01),
   rel.info.guide = 0.005, c0.start = 1, aStart = 1, bStart = 0,
   gStart = 0, start.sd = 0.2, penalty.Z0 = T, pDegree = 5,
-  max.c0.iter = 5, c0.min = 1e-05, LRT.Z.select = T, LRT.Z0.select = T,
-  LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T, only.integer = F)
+  max.c0.iter = 5, c0.min = 1e-05)
+}
+\arguments{
+\item{n.points}{number of discritized points of the underlying true expression distribution. Default is 50}
+
+\item{nStart}{number of random starts for the optimization problem (as it is non-convex) to find the global minimum. Default is 2}
+
+\item{nStart.lrt}{number of random starts for the unpenalized optimization problem for likelihood ratio testing}
+
+\item{max.quantile}{the maximum quantile of the observed counts used for finding the range of the underlying true expression distribution. Default is 0.98}
+
+\item{max.sparse}{the maximum sparsity allowed (fraction of zero count entries) for a gene to be computed. Default is 0.95}
+
+\item{LRT.Z.select}{a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.}
+
+\item{LRT.Z0.select}{a vector of length 1 or the number of columns of \code{Z0} indicating for which column of \code{Z0} the coefficients are tested against 0 using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.}
+
+\item{LRT.Z.values}{a vector of length 1 or the number of columns of \code{Z} showing the values that LRT tests on coefficients of \code{Z} are tested against. Default value is 0, meanings that all tests are tested against 0.}
+
+\item{zeroInflate}{whether to include the zero inflation part to the deconvolved distribution. Default is TRUE}
+
+\item{dense.add.0}{whether smooth the density at 0 into \code{density.points} in the output DESCEND object}
+
+\item{only.integer}{whether set the discrete points to be integers. Default is FALSE}
+
+\item{rel.info.range}{the relative information range allowed for finding the optimal tuning parameter \code{c0}}
+
+\item{rel.info.guide}{one parameter inside the \code{rel.info.range} controling for the searching process of \code{c0}}
+
+\item{c0.start}{the starting value of \code{c0}. Default is 1}
+
+\item{aStart}{the starting values of the spline coefficients of the deconvolved distribution}
+
+\item{bStart}{the starting values of the coefficients of Z0}
+
+\item{gStart}{the starting values of the coefficients of Z}
+
+\item{start.sd}{standard deviation of the random starting values when nStart > 1}
+
+\item{penalty.Z0}{whether add penalty to the coefficients of Z0 or not in optimization. Default is TRUE}
+
+\item{pDegree}{degree of the spline bases. Default is 5}
+
+\item{max.c0.iter}{maximum iteration allowed to find the optimal \code{c0}}
+
+\item{c0.min}{minimum \code{c0} allowed to avoid degeneration}
 }
 \description{
-The control parameters of the function \code{\link{descend}} and \code{\link{deconvSingle}}
+The control parameters of the function \code{\link{runDescend}} and \code{\link{deconvSingle}}
 }

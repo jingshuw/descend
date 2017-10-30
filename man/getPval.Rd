@@ -7,7 +7,7 @@
 getPval(descend.list)
 }
 \arguments{
-\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
+\item{descend.list}{a list of descend objects computed from {\code{\link{runDescend}}}}
 }
 \value{
 A matrix of one column. Each row is for a distribution measurement or a coefficient if covariates are presented.

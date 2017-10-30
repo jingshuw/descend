@@ -14,6 +14,8 @@ deconvG(tau, X, offset, family = c("Poisson", "Negative Binomial"),
 
 \item{X}{a vector of observed counts}
 
+\item{offset}{a vector with the same length as \code{X}. See details}
+
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 
 \item{ignoreZero}{whether ignore the zero count. If true, then use truncated Poisson / Negative Binomial distribution. Default is False}

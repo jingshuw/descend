@@ -8,7 +8,7 @@ findHVG(descend.list, criteria = c("Gini", "CV"), quantile = 0.7,
   threshold = 3, plot.result = T, spline.df = 5)
 }
 \arguments{
-\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
+\item{descend.list}{a list of descend objects computed from {\code{\link{runDescend}}}}
 
 \item{criteria}{the cirteria of HVG finding, either "Gini" or "CV"}
 
@@ -17,6 +17,8 @@ findHVG(descend.list, criteria = c("Gini", "CV"), quantile = 0.7,
 \item{threshold}{threshold of the normalized difference for HVG selection. Default is 3. A larger value results in a more stringent selection}
 
 \item{plot.result}{whether plot the selection results or not. Default is TRUE.}
+
+\item{spline.df}{the degree of freedom of the spline functions used to fit the quantile regression curve}
 }
 \value{
 A list of elements:

@@ -7,7 +7,7 @@
 getEstimates(descend.list)
 }
 \arguments{
-\item{descend.list}{a list of descend objects computed from {\code{\link{descend}}}}
+\item{descend.list}{a list of descend objects computed from {\code{\link{runDescend}}}}
 }
 \value{
 A list of matrices where each element is for a distribution measurement or a coefficient if covariates are presented. For each distribution measurement or coefficient, the matrix contains two columns. Each row is for a gene. The first column is the estimated value and second value is the estimated standard deviation.

@@ -37,11 +37,13 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
 
 \item{ercc.trueMol}{the true input number of molecules of the ercc spike-ins when \code{ercc.matrix} is not NULL.}
 
-\item{control}{settings see see {\code{\link{deconv.control}}}}
+\item{center.Z0}{whether to center Z0 to make \code{Z0} adjusted active fraction more meaningful. Default is TRUE}
+
+\item{control}{settings see {\code{\link{DESCEND.control}}}}
 }
 \value{
 a list with elements
-\item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{descend}.}
+\item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{runDescend}.}
 \item{model}{model parameters, including the actual \code{scaling.consts}, \code{Z}, the rescaled \code{Z0}, \code{control}, \code{family} and \code{NB.size}}
 }
 \description{
