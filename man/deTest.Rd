@@ -6,7 +6,8 @@
 \usage{
 deTest(descend.multipop.output, de.pair.names, count.matrix, labels,
   N.genes.null = 10000, alternative = c("two.sided", "less", "greater"),
-  n.cores = 1, cl = NULL, verbose = T)
+  n.cores = 1, cl = NULL, type = "FORK", verbose = T,
+  show.message = T)
 }
 \arguments{
 \item{descend.multipop.output}{the returned value of \code{\link{descendMultiPop}}}
@@ -21,11 +22,15 @@ deTest(descend.multipop.output, de.pair.names, count.matrix, labels,
 
 \item{alternative}{the alternative hypotheses for differential testing}
 
-\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
+\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}
 
+\item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
+
 \item{verbose}{verbose the estimation and testing procedures or not. Default is True.}
+
+\item{show.message}{whether show messages for the computing progresses. Default is TRUE}
 }
 \value{
 a list with elements
@@ -34,5 +39,5 @@ a list with elements
 \item{perm.scores}{the permuted z-scores matrix used as the null distribution of the z-scores in each column. The number of rows equals to \code{N.genes.null}}
 }
 \description{
-Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
+Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}. For examples, see \code{\link{descendMultiPop}}
 }

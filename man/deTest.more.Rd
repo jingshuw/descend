@@ -6,7 +6,8 @@
 \usage{
 deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
   labels, N.more.genes = 10000, alternative = c("two.sided", "less",
-  "greater"), n.cores = 1, cl = NULL, verbose = T)
+  "greater"), n.cores = 1, cl = NULL, type = "FORK", verbose = T,
+  show.message = T)
 }
 \arguments{
 \item{descend.multipop.output}{the returned value of \code{\link{descendMultiPop}}}
@@ -23,15 +24,19 @@ deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
 
 \item{alternative}{the alternative hypotheses for differential testing}
 
-\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
+\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}
 
+\item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
+
 \item{verbose}{verbose the estimation and testing procedures or not. Default is True.}
+
+\item{show.message}{whether show messages for the computing progresses. Default is TRUE}
 }
 \value{
 same as \code{\link{deTest}}
 }
 \description{
-The minimum possible p-value is limited by the number of permuted genes used. This function can add more permuted genes to the previous result to get smaller p-values.
+The minimum possible p-value is limited by the number of permuted genes used. This function can add more permuted genes to the previous result to get smaller p-values. For examples, see \code{\link{descendMultiPop}}
 }

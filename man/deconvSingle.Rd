@@ -9,7 +9,7 @@ deconvSingle(y, scaling.consts = NULL, Z = NULL, Z0 = NULL,
   "Negative Binomial"), NB.size = 100, verbose = T, control = list())
 }
 \arguments{
-\item{y}{a vector of observed counts of a single gene}
+\item{y}{a vector of observed counts across cells for a single gene}
 
 \item{scaling.consts}{a vector of cell specific scaling constants, either the cell efficiency or the library size}
 
@@ -33,5 +33,12 @@ deconvSingle(y, scaling.consts = NULL, Z = NULL, Z0 = NULL,
 a DESCEND object. See also \code{\link{DESCEND}}
 }
 \description{
-The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
+The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0), and store them in a DESCEND object.
+}
+\examples{
+
+X <- rpois(1000, 0.2 * 3)
+Z <- rnorm(1000)
+result <- deconvSingle(X, Z = Z, Z0 = Z, scaling.consts = rep(0.2, 1000), do.LRT.test = TRUE)
+result@estimates
 }

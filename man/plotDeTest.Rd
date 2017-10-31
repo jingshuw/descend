@@ -5,7 +5,7 @@
 \title{Plot the differential testing result of one distribution measurement or coefficient}
 \usage{
 plotDeTest(descend.multipop.output, de.pair.names, deTest.output,
-  alpha = 0.05, method = "BH", measurement.name = "Gini")
+  alpha = 0.05, method = "BH", measurement.name = "Gini", log = "")
 }
 \arguments{
 \item{descend.multipop.output}{the returned value of \code{\link{descendMultiPop}}}
@@ -19,10 +19,12 @@ plotDeTest(descend.multipop.output, de.pair.names, deTest.output,
 \item{method}{default is BH. More details see \code{\link[stats]{p.adjust}}}
 
 \item{measurement.name}{one of the colnames of \code{deTest.ouput$p.values}}
+
+\item{log}{control log transformation of x/y axes, see \code{\link[graphics]{plot}}}
 }
 \value{
 a matrix of five columns. Each row is a gene.
 }
 \description{
-Given a significance level and the measurement name, the significiant genes are visualized as red dots.
+Given a significance level and the measurement name, the significiant genes are visualized as red dots. For examples, see \code{\link{descendMultiPop}}
 }

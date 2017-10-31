@@ -1,6 +1,6 @@
 #' DESCEND applied to two or more cell populations
 #'
-#' This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction.
+#' This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}. 
 #'
 #' @inheritParams runDescend
 #' @param labels a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}
@@ -10,6 +10,42 @@
 #' \item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{runDescend}.}
 #' \item{model}{model parameters, including the actual \code{scaling.consts}, \code{Z}, the rescaled \code{Z0}, \code{control}, \code{family} and \code{NB.size}}
 #'
+#' @examples
+#' \dontrun{
+#' data(zeisel)
+#'  set.seed(1)
+#'  ## For a Windows machine add the argument: type = "PSOCK" to each of the function that need parallization.
+#'  result.multi <- descendMultiPop(zeisel$count.matrix.small,
+#'                                  labels = zeisel$labels,
+#'                                  scaling.consts = zeisel$library.size,
+#'                                  Z0 = log(zeisel$cell.size), verbose = FALSE, show.message = FALSE,
+#'                                  n.cores = 3)
+#'  ## try 100 null genes first
+#'  detest.result <- deTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+#'                          zeisel$count.matrix.small, zeisel$labels,
+#'                          verbose = FALSE, show.message = FALSE,
+#'                          N.genes.null = 100, n.cores = 3)
+#'  
+#'  ## 100 null genes may not get small enough p-values
+#'  detest.result <- deTest.more(result.multi, detest.result, 
+#'                               c("endothelial-mural", "pyramidal CA1"),
+#'                               zeisel$count.matrix.small, labels = zeisel$labels, 
+#'                               N.more.genes = 200, verbose = FALSE, 
+#'                               n.cores = 3)
+#'  
+#'  layout(matrix(1:4, nrow = 2))
+#'  de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+#'                          detest.result, measurement.name = "Gini", alpha = 0.05)
+#'  de.scores2 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+#'                          detest.result, measurement.name = "Active Intensity", 
+#'                          alpha = 0.05, log = "xy")
+#'  de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+#'                          detest.result, measurement.name = "Active Fraction", alpha = 0.1)
+#'  de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+#'                          detest.result, measurement.name = "Adjusted Active Fraction", alpha = 0.1)
+#' }
+#'
+#' @rdname descendMultiPop
 #' @export
 
 descendMultiPop <- function(count.matrix,
@@ -18,10 +54,11 @@ descendMultiPop <- function(count.matrix,
                             scaling.consts = NULL,
                             Z = NULL,
                             Z0 = NULL,
-                            n.cores = 1, cl = NULL,
+                            n.cores = 1, cl = NULL, type = "FORK",
                             do.LRT.test = F, 
                             family = c("Poisson", "Negative Binomial"),
                             NB.size = 100,
+                            show.message = T,
                             verbose = T, 
                             ercc.trueMol = NULL,
                             center.Z0 = T, 
@@ -87,10 +124,10 @@ descendMultiPop <- function(count.matrix,
                                                 scaling.consts = scaling.consts.temp,
                                                 Z = Z.temp,
                                                 Z0 = Z0.temp,
-                                                n.cores = n.cores, cl = cl, 
+                                                n.cores = n.cores, cl = cl, type = type,
                                                 do.LRT.test = do.LRT.test,
                                                 family = family, NB.size = NB.size,
-                                                verbose = verbose, 
+                                                verbose = verbose, show.message = show.message,
                                                 control = control))
                             })
   names(result.list) <- levels(labels)
@@ -101,16 +138,20 @@ descendMultiPop <- function(count.matrix,
                           function(ll) {
                             result <- lapply(ll, 
                                              function(lll) {
+                                        if (class(lll) != "DESCEND")
+                                          return(NA)
                                         temp <- lll@estimates["Z0 effect: beta0", ]
                                         p0.adj <- exp(temp[1])/(1 + exp(temp[1]))
                                         p0.adj.bias <- temp[2] * p0.adj * 
                                           (1 - p0.adj)
                                         p0.adjsd <- temp[3] * p0.adj * (1 - p0.adj)
-                                        temp <- c(p0.adj, p0.adj.bias, p0.adjsd)
+                                        temp <- c(1- p0.adj, -p0.adj.bias, p0.adjsd,
+                                                  sqrt(p0.adj.bias^2 + p0.adjsd^2))
 
-                                        lll@estimates <- rbind(lll@estimates[1:5, ],
+                                        lll@estimates <- rbind(lll@estimates[1:5,,drop = F],
                                                                temp,
                                                   lll@estimates[-(1:5),, drop = F])
+                                        rownames(lll@estimates)[6] <- "Z0 Adjusted Active Fraction"
                                         return(lll)
                               
                               })
@@ -126,7 +167,8 @@ descendMultiPop <- function(count.matrix,
 
 #' Perform differential testing of the distribution measurements between two cell populations
 #'
-#' Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}.
+#' Permutation test is used to get the p-values in differential testing. To keep the possible correlation structure between genes. We run \code{ceiling(N.genes.null/nrow(count.matrix))} rounds of permutation. For each round, we permute cell label once and deconvolve the true expression distribution for all the selected genes with the permuted cell labels. One may need more rounds of permutation to get smaller p-values. See \code{\link{deTest.more}}. For examples, see \code{\link{descendMultiPop}}
+
 #'
 #' @inheritParams descendMultiPop
 #' @param descend.multipop.output the returned value of \code{\link{descendMultiPop}}
@@ -139,6 +181,7 @@ descendMultiPop <- function(count.matrix,
 #' \item{scores}{the z-scores matrix in differential testing. Each row is a gene and each column is a distribution measurement of coefficient (if \code{Z} or \code{Z0} is presented)}
 #' \item{perm.scores}{the permuted z-scores matrix used as the null distribution of the z-scores in each column. The number of rows equals to \code{N.genes.null}}
 #'
+#' @rdname deTest
 #' @export
 
 deTest <- function(descend.multipop.output,
@@ -147,8 +190,8 @@ deTest <- function(descend.multipop.output,
                    labels,
                    N.genes.null = 10000,
                    alternative = c("two.sided", "less", "greater"),
-                   n.cores = 1, cl = NULL,
-                   verbose = T) {
+                   n.cores = 1, cl = NULL, type = "FORK",
+                   verbose = T, show.message = T) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
@@ -182,10 +225,11 @@ deTest <- function(descend.multipop.output,
                             scaling.consts = params$scaling.consts[perm.idx],
                             Z = params$Z[perm.idx,], 
                             Z0 = params$Z0[perm.idx,],
-                            n.cores = n.cores, cl = cl,
+                            n.cores = n.cores, cl = cl, type = type,
                             do.LRT.test = F,
                             family = params$family, NB.size = params$NB.size,
-                            verbose = verbose, control = params$control)
+                            verbose = verbose, show.message = show.message, 
+                            control = params$control)
 
     perm.result1 <- c(perm.result1, temp$descend.list.list[[1]])
     perm.result2 <- c(perm.result2, temp$descend.list.list[[2]])
@@ -254,14 +298,15 @@ deTest <- function(descend.multipop.output,
 
 #' Add more permuted genes for differential testing of the distribution measurements between two cell populations
 #'
-#' The minimum possible p-value is limited by the number of permuted genes used. This function can add more permuted genes to the previous result to get smaller p-values.
+#' The minimum possible p-value is limited by the number of permuted genes used. This function can add more permuted genes to the previous result to get smaller p-values. For examples, see \code{\link{descendMultiPop}}
+
 #'
 #' @inheritParams deTest
 #' @param N.more.genes number of more permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be 
 #' @param deTest.output returned values of \code{\link{deTest}} or \code{\link{deTest.more}}
 #'
 #' @return same as \code{\link{deTest}}
-#'
+#' @rdname deTest.more
 #' @export
 
 deTest.more <- function(descend.multipop.output,
@@ -271,8 +316,8 @@ deTest.more <- function(descend.multipop.output,
                         labels,
                         N.more.genes = 10000,
                         alternative = c("two.sided", "less", "greater"),
-                        n.cores = 1, cl = NULL,
-                        verbose = T) {
+                        n.cores = 1, cl = NULL, type = "FORK",
+                        verbose = T, show.message = T) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
@@ -307,10 +352,11 @@ deTest.more <- function(descend.multipop.output,
                             scaling.consts = params$scaling.consts[perm.idx],
                             Z = params$Z[perm.idx,], 
                             Z0 = params$Z0[perm.idx,],
-                            n.cores = n.cores, cl = cl,
+                            n.cores = n.cores, cl = cl, type = type,
                             do.LRT.test = F,
                             family = params$family, NB.size = params$NB.size,
-                            verbose = verbose, control = params$control)
+                            verbose = verbose, show.message = show.message,
+                            control = params$control)
 
     perm.result1 <- c(perm.result1, temp$descend.list.list[[1]])
     perm.result2 <- c(perm.result2, temp$descend.list.list[[2]])
@@ -379,15 +425,17 @@ deTest.more <- function(descend.multipop.output,
 
 #' Plot the differential testing result of one distribution measurement or coefficient
 #'
-#' Given a significance level and the measurement name, the significiant genes are visualized as red dots. 
+#' Given a significance level and the measurement name, the significiant genes are visualized as red dots. For examples, see \code{\link{descendMultiPop}}
+
 #'
 #' @inheritParams deTest.more
 #' @param alpha the nomial significance level
 #' @param method default is BH. More details see \code{\link[stats]{p.adjust}}
 #' @param measurement.name one of the colnames of \code{deTest.ouput$p.values}
+#' @param log control log transformation of x/y axes, see \code{\link[graphics]{plot}}
 #'
 #' @return a matrix of five columns. Each row is a gene.
-#'
+#' @rdname plotDeTest
 #' @export
 
 plotDeTest <- function(descend.multipop.output,
@@ -395,7 +443,7 @@ plotDeTest <- function(descend.multipop.output,
                        deTest.output,
                        alpha = 0.05,
                        method = "BH",
-                       measurement.name = "Gini") {
+                       measurement.name = "Gini", log = "") {
 
   if (!measurement.name %in% colnames(deTest.output$p.values)) {
     stop("Choose measurement.name as one of the colnames of deTest.output$p.values!")
@@ -411,7 +459,7 @@ plotDeTest <- function(descend.multipop.output,
   sig.idx <- p.adj < alpha
 
   plot(ests, pch = 20, xlab = de.pair.names[1], ylab = de.pair.names[2],
-        main = measurement.name)
+        main = measurement.name, log = log)
   points(ests[sig.idx, ], col = "red", pch = 20)
   abline(a = 0, b= 1, col = "blue")
 

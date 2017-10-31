@@ -4,7 +4,7 @@
 #' We assume X ~ F(T) where F is the noise distribution. We assume that 
 #' \deqn{log(T) = offset + \gamma Z + \epsilon}
 #' \deqn{P(T = 0) = \beta_0 + \beta_1 Z0}
-#' The goal is the recover the distribution of exp(log(T) - offset - gamma Z), which has density g and is discretized at exp(tau) (add 0 when zero inflation is allowed).
+#' The goal is the recover the distribution of exp(log(T) - offset - gamma Z), which has density g and is discretized at exp(tau) (add 0 when zero inflation is allowed). There can be some warning messages for the optimization process, which can be ignored.
 #'
 #' @param tau log of the discrete points of the deconvolved distribution
 #' @param X a vector of observed counts
@@ -35,7 +35,21 @@
 #' \item{statsFunction}{the function computing the relavant statistics}
 #'
 #' @note This is an extension of the G-modeling package
+#' @examples
+#'
+#' X <- rpois(1000, 0.2 * 3)
+#' lam.max <- quantile(X[!X == 0], probs = c(0.98))/0.2
+#' tau <- seq(0, lam.max, length.out = 51)[-1]
+#' 
+#' Z <- rnorm(1000)
+#' 
+#' result <- deconvG(log(tau), X, zeroInflate = TRUE,
+#'                      Z = Z,
+#'                      Z0 = Z,
+#'                      offset = rep(log(0.2), 1000))
+#' 
 #' @import stats
+#' @rdname deconvG
 #' @export
 
 deconvG <- 
@@ -56,8 +70,10 @@ function(tau, X,
          ...) 
 {
 
+#  print(head(X))
+
   family <- match.arg(family)
-  require(stats)
+  requireNamespace("stats")
   if (!is.null(Z))
     Z <- as.matrix(Z)
   if (!is.null(Z0)) {
@@ -310,6 +326,7 @@ function(tau, X,
         P.tilde <- P
         g.tilde <- g
       }
+    #  print(head(X, 3))
       if (family == "Poisson")
         A <- (X - mu) * P.tilde # dimension is N * m
       if (family == "Negative Binomial")

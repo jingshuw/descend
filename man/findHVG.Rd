@@ -26,5 +26,5 @@ A list of elements:
 \item{HVG.genes}{A vector of the selected HVG gene names}
 }
 \description{
-The function finds highly variable genes based on the Gini or CV estimates from DESCEND. A quantile natural cubic spline regression of the estimated selected criteria on the log of the estimated mean for the genes is performed as the general trend. HVGs are selected as the genes whose normalized difference between its estimates and the trend is larger than a threshold.
+The function finds highly variable genes based on the Gini or CV estimates from DESCEND. A quantile natural cubic spline regression of the estimated selected criteria on the log of the estimated mean for the genes is performed as the general trend. HVGs are selected as the genes whose normalized difference between its estimates and the trend is larger than a threshold. For examples, see \code{\link{runDescend}}
 }

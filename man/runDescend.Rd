@@ -5,9 +5,10 @@
 \title{Apply DESCEND to all the genes in the count matrix for one cell population}
 \usage{
 runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
-  Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL, do.LRT.test = F,
-  family = c("Poisson", "Negative Binomial"), NB.size = 100, verbose = T,
-  ercc.trueMol = NULL, control = list())
+  Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL, type = "FORK",
+  do.LRT.test = F, family = c("Poisson", "Negative Binomial"),
+  NB.size = 100, show.message = T, verbose = T, ercc.trueMol = NULL,
+  control = list())
 }
 \arguments{
 \item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
@@ -20,15 +21,19 @@ runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
 
 \item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
 
-\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
+\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}
+
+\item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
 
 \item{do.LRT.test}{whether do LRT test on the coefficients and active fraction or not. Default is True}
 
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 
 \item{NB.size}{over-dispersion parameter when the family is Negative Binomial: mu = mu + mu^2/size}
+
+\item{show.message}{whether show messages for the computing progresses. Default is TRUE}
 
 \item{verbose}{verbose the estimation and testing procedures or not. Default is True.}
 
@@ -40,5 +45,26 @@ runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
 a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution.
 }
 \description{
-Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed.
+Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed. For deconvolution of two or more cell populations, see \code{\link{descendMultiPop}}. For model details, see \code{\link{deconvG}}.
+}
+\examples{
+\dontrun{
+## For a Windows machine add the argument: type = "PSOCK"
+data(zeisel)
+result <- runDescend(zeisel$count.matrix.small, 
+                     scaling.consts = zeisel$library.size, n.cores = 3)
+hvg <- findHVG(result)
+hvg$HVG.genes
+
+
+
+result1 <- runDescend(zeisel$count.matrix.small, 
+                      zeisel$ercc.matrix, ercc.trueMol = zeisel$trueMol,
+                      Z0 = log(zeisel$cell.size),
+                      n.cores = 3)
+
+ests <- getEstimates(result1)
+ests$CV
+}
+
 }

@@ -6,9 +6,9 @@
 \usage{
 descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
   scaling.consts = NULL, Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL,
-  do.LRT.test = F, family = c("Poisson", "Negative Binomial"),
-  NB.size = 100, verbose = T, ercc.trueMol = NULL, center.Z0 = T,
-  control = list())
+  type = "FORK", do.LRT.test = F, family = c("Poisson",
+  "Negative Binomial"), NB.size = 100, show.message = T, verbose = T,
+  ercc.trueMol = NULL, center.Z0 = T, control = list())
 }
 \arguments{
 \item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
@@ -23,15 +23,19 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
 
 \item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
 
-\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly}
+\item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
 \item{cl}{an object of class "cluster". See more details in \code{\link[parallel]{makeCluster}}}
+
+\item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
 
 \item{do.LRT.test}{whether do LRT test on the coefficients and active fraction or not. Default is True}
 
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 
 \item{NB.size}{over-dispersion parameter when the family is Negative Binomial: mu = mu + mu^2/size}
+
+\item{show.message}{whether show messages for the computing progresses. Default is TRUE}
 
 \item{verbose}{verbose the estimation and testing procedures or not. Default is True.}
 
@@ -47,5 +51,41 @@ a list with elements
 \item{model}{model parameters, including the actual \code{scaling.consts}, \code{Z}, the rescaled \code{Z0}, \code{control}, \code{family} and \code{NB.size}}
 }
 \description{
-This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction.
+This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}.
+}
+\examples{
+\dontrun{
+data(zeisel)
+ set.seed(1)
+ ## For a Windows machine add the argument: type = "PSOCK" to each of the function that need parallization.
+ result.multi <- descendMultiPop(zeisel$count.matrix.small,
+                                 labels = zeisel$labels,
+                                 scaling.consts = zeisel$library.size,
+                                 Z0 = log(zeisel$cell.size), verbose = FALSE, show.message = FALSE,
+                                 n.cores = 3)
+ ## try 100 null genes first
+ detest.result <- deTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+                         zeisel$count.matrix.small, zeisel$labels,
+                         verbose = FALSE, show.message = FALSE,
+                         N.genes.null = 100, n.cores = 3)
+ 
+ ## 100 null genes may not get small enough p-values
+ detest.result <- deTest.more(result.multi, detest.result, 
+                              c("endothelial-mural", "pyramidal CA1"),
+                              zeisel$count.matrix.small, labels = zeisel$labels, 
+                              N.more.genes = 200, verbose = FALSE, 
+                              n.cores = 3)
+ 
+ layout(matrix(1:4, nrow = 2))
+ de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+                         detest.result, measurement.name = "Gini", alpha = 0.05)
+ de.scores2 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+                         detest.result, measurement.name = "Active Intensity", 
+                         alpha = 0.05, log = "xy")
+ de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+                         detest.result, measurement.name = "Active Fraction", alpha = 0.1)
+ de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
+                         detest.result, measurement.name = "Adjusted Active Fraction", alpha = 0.1)
+}
+
 }

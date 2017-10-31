@@ -1,8 +1,8 @@
 #' Deconvolve the true gene expression distribution  of a single gene
 #'
-#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter of the penalty term in G-modelling. Besides, it computs the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0).
+#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0), and store them in a DESCEND object.
 #'
-#' @param y a vector of observed counts of a single gene
+#' @param y a vector of observed counts across cells for a single gene
 #' @param scaling.consts a vector of cell specific scaling constants, either the cell efficiency or the library size
 #' @inheritParams deconvG
 #' @param plot.density whether plot the density curve of the deconvolved the distribution or not. The zero inflation part has been smoothed into the density curve for visualization. Default is True.
@@ -11,7 +11,15 @@
 #' @param control settings see {\code{\link{DESCEND.control}}}
 #'
 #' @return a DESCEND object. See also \code{\link{DESCEND}}
+#' @examples
+#'
+#' X <- rpois(1000, 0.2 * 3)
+#' Z <- rnorm(1000)
+#' result <- deconvSingle(X, Z = Z, Z0 = Z, scaling.consts = rep(0.2, 1000), do.LRT.test = TRUE)
+#' result@estimates
+#
 #' @import graphics
+#' @rdname deconvSingle
 #' @export
 
 
@@ -249,8 +257,8 @@ deconvSingle <- function(y,
           offset1 <- offset + LRT.Z.values * Z
           condition.list <- c(condition.list, Z = list(list(control$zeroInflate, NULL, Z0, p, offset1)))
           names(condition.list)[length(condition.list)] <- paste("Effect of Z: gamma = ",
-                                                                 LRT.Z.values[i], sep = "")
-          test.name <- c(test.name, paste("Effect of Z: gamma = ", LRT.Z.values[i], sep = ""))
+                                                                 LRT.Z.values, sep = "")
+          test.name <- c(test.name, paste("Effect of Z: gamma = ", LRT.Z.values, sep = ""))
         } else
           for(i in 1:ncol(Z)) {
             if (LRT.Z.select[i]) {
@@ -432,7 +440,7 @@ DESCEND.control <- function(n.points = 50,
 #' @section Slots:
 #' \describe{
 #' \item{\code{distribution}}{The distribution of the deconvolved distribution with relative statistics}
-#' \item{\code{estimates}}{The matrix of distribution measurements and coefficients estimated values, bias and standard deviation}
+#' \item{\code{estimates}}{The matrix of distribution measurements and coefficients estimated values, bias, standard deviation and mean square error (named as \code{DESCEND.sd})}
 #' \item{\code{pval}}{The p values of the likelihood ratio tests if computed}
 #' \item{\code{density.points}}{Smoothed version of the distribution for easier plotting of the distribution}
 #' }
