@@ -22,6 +22,16 @@ DESCEND deconvolves the true gene expression distribution across cells for UMI s
  hvg$HVG.genes
 ```
 
+```{r eval = F}
+ result1 <- runDescend(zeisel$count.matrix.small, 
+                       zeisel$ercc.matrix, ercc.trueMol = zeisel$trueMol,
+                       Z0 = log(zeisel$cell.size),
+                       n.cores = 3)
+ 
+ ests <- getEstimates(result1)
+ ests$CV
+```
+
 ### For two or more cell popluations, DESCEND can perform differential testing of several distribution measurementsbetween any of the two cell groups with covariates adjustment.
 
 ```{r eval = F}
