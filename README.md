@@ -4,6 +4,12 @@ R package for DESCEND
 
 DESCEND deconvolves the true gene expression distribution across cells for UMI scRNA-seq counts. It provides estimates of several distribution based statistics (five distribution measurements and the coefficients of covariates (such as batches or cell size)). Based on the estimation, DESCEND also can perform highly variable selection and differential testing of dispersion and burstiness measurements between two groups of cells with covariates adjustment.
 
+## Installation:
+
+```{r eval = F}
+library(devtools)
+install_github("jingshuw/descend")
+```
 
 ## Examples:
 (for a Windows machine, add the argument: type = "PSOCK" to each of the function that needs parallization)
