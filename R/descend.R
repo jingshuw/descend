@@ -125,7 +125,10 @@ runDescend <- function(count.matrix,
     requireNamespace("iterators")
     outfile <- paste("verbose_log_", as.numeric(Sys.time()), ".txt", sep = "")
     if (is.null(cl)) {
-      cl <- makeCluster(n.cores, type = type, outfile = outfile)
+      if (verbose)
+        cl <- makeCluster(n.cores, type = type, outfile = outfile)
+      else
+        cl <- makeCluster(n.cores, type = type)
       if (verbose && show.message)
         print(paste("log outputs are stored in file", outfile))
     }
@@ -140,12 +143,7 @@ runDescend <- function(count.matrix,
 
       if (verbose)
         print(paste("Start computing for one gene!", Sys.time()))
-      if (mean(v == 0) > control$max.sparse) {
-        control$max.quantile <- 0.99
-        control$max.sparse <- 0.99
-      }
-
-
+    
       temp <- try(deconvSingle(as.vector(v),
                                scaling.consts = scaling.consts,
                                Z = Z, Z0 = Z0,

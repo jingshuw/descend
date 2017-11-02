@@ -35,7 +35,7 @@ deconvSingle <- function(y,
   family <- match.arg(family)
   control <- do.call("DESCEND.control", control)
 
-  if (mean(y == 0) > control$max.sparse)
+  if (mean(y == 0) > control$max.sparse[1] || sum(y != 0) < control$max.sparse[2])
     stop("Too sparse data!")
 
   if (is.null(scaling.consts)) {
@@ -47,7 +47,8 @@ deconvSingle <- function(y,
   }
 
 
-  lam.max <- quantile(y/exp(offset), probs = control$max.quantile)
+  temp <- y/exp(offset)
+  lam.max <- quantile(temp[temp > 0], probs = control$max.quantile)
   if (control$only.integer) {
     if (lam.max <= control$n.points)
       tau <- log(1:ceiling(lam.max))
@@ -369,8 +370,8 @@ deconvSingle <- function(y,
 #' @param n.points number of discritized points of the underlying true expression distribution. Default is 50
 #' @param nStart number of random starts for the optimization problem (as it is non-convex) to find the global minimum. Default is 2
 #' @param nStart.lrt number of random starts for the unpenalized optimization problem for likelihood ratio testing
-#' @param max.quantile the maximum quantile of the observed counts used for finding the range of the underlying true expression distribution. Default is 0.98
-#' @param max.sparse the maximum sparsity allowed (fraction of zero count entries) for a gene to be computed. Default is 0.95
+#' @param max.quantile the maximum quantile of the non-zero observed counts used for finding the range of the underlying true expression distribution. Default is 0.98
+#' @param max.sparse a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.95, 25). For studying active fraction, one should increase the threshold to get estimates with acceptable accuracy.
 #' @param LRT.Z.select a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z0.select a vector of length 1 or the number of columns of \code{Z0} indicating for which column of \code{Z0} the coefficients are tested against 0 using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z.values a vector of length 1 or the number of columns of \code{Z} showing the values that LRT tests on coefficients of \code{Z} are tested against. Default value is 0, meanings that all tests are tested against 0.
@@ -394,8 +395,8 @@ deconvSingle <- function(y,
 DESCEND.control <- function(n.points = 50,
                             nStart = 2,
                             nStart.lrt = 2,
-                            max.quantile = 0.98,
-                            max.sparse = 0.95,
+                            max.quantile = 0.95,
+                            max.sparse = c(0.99, 20),
                             LRT.Z.select = T,
                             LRT.Z0.select = T,
                             LRT.Z.values = 0,
