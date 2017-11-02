@@ -18,6 +18,7 @@ install_github("jingshuw/descend")
 ### For a single cell population, DESCEND can be used to find highly variable genes (HVG).
 
 ```{r eval = F}
+ library(descend)
  data(zeisel)
 
  result <- runDescend(zeisel$count.matrix.small, 
@@ -41,8 +42,6 @@ install_github("jingshuw/descend")
 ### For two or more cell popluations, DESCEND can perform differential testing of several distribution measurementsbetween any of the two cell groups with covariates adjustment.
 
 ```{r eval = F}
-  data(zeisel)
-
   set.seed(1)
 
   result.multi <- descendMultiPop(zeisel$count.matrix.small,
@@ -50,8 +49,8 @@ install_github("jingshuw/descend")
                                   scaling.consts = zeisel$library.size,
                                   Z0 = log(zeisel$cell.size), verbose = F, show.message = F,
                                   n.cores = 3)
-  ##try 100 null genes first:
 
+  ##try 100 null genes first:
   detest.result <- deTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                           zeisel$count.matrix.small, zeisel$labels,
                           verbose = F, show.message = F,
