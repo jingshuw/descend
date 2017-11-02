@@ -39,7 +39,7 @@ install_github("jingshuw/descend")
  ests$CV
 ```
 
-### For two or more cell popluations, DESCEND can perform differential testing of several distribution measurementsbetween any of the two cell groups with covariates adjustment.
+### For two or more cell popluations, DESCEND can perform differential testing of several distribution measurements between any of the two cell groups with covariates adjustment.
 
 ```{r eval = F}
   set.seed(1)
@@ -48,20 +48,20 @@ install_github("jingshuw/descend")
                                   labels = zeisel$labels,
                                   scaling.consts = zeisel$library.size,
                                   Z0 = log(zeisel$cell.size), verbose = F, show.message = F,
-                                  n.cores = 3)
+                                  n.cores = 2)
 
   ##try 100 null genes first:
   detest.result <- deTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                           zeisel$count.matrix.small, zeisel$labels,
                           verbose = F, show.message = F,
-                          N.genes.null = 100, n.cores = 3)
+                          N.genes.null = 100, n.cores = 2)
   
   ## 100 null genes may not get small enough p-values
   detest.result <- deTest.more(result.multi, detest.result, 
                                c("endothelial-mural", "pyramidal CA1"),
                                zeisel$count.matrix.small, labels = zeisel$labels, 
                                N.more.genes = 200, verbose = F, 
-                               n.cores = 3)
+                               n.cores = 2)
   
   layout(matrix(1:4, nrow = 2))
   de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
