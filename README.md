@@ -72,5 +72,5 @@ install_github("jingshuw/descend")
   de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                           detest.result, measurement.name = "Active Fraction", alpha = 0.1)
   de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                          detest.result, measurement.name = "Adjusted Active Fraction", alpha = 0.1)
+                          detest.result, measurement.name = "Z0 Adjusted Active Fraction", alpha = 0.1)
 ```
