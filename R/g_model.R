@@ -12,8 +12,8 @@
 #' @param family family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter
 #' @param ignoreZero whether ignore the zero count. If true, then use truncated Poisson / Negative Binomial distribution. Default is False
 #' @param zeroInflate whether add zero inflation part to the deconvolved distribution to reflect transcriptional bursting. Default is True. 
-#' @param Z covariates for active intensity. Default is NULL. 
-#' @param Z0 covariates for active fraction. Used only when zeroInflate is True. Default is NULL.
+#' @param Z covariates for nonzero mean. Default is NULL. 
+#' @param Z0 covariates for nonzero fraction. Used only when zeroInflate is True. Default is NULL.
 #' @param c0 the tuning parameter on the L2 penalty term. Default is 1. c0 will be selected automatically in \code{deconvSingle}
 #' @param NB.size over-dispersion parameter when the family is Negative Binomial: mu = mu + mu^2/size
 #' @param only.value whether not to compute the estimation statistics but only the value of the optimized lieklihood. Used for likelihood ratio test.
@@ -267,8 +267,8 @@ function(tau, X,
       value
     }
 
-    result <- stats::nlm(f = loglik, p = aStart, gradtol = 1e-5,
-                         ...)
+    suppressWarnings(result <- stats::nlm(f = loglik, p = aStart, gradtol = 1e-5,
+                         ...))
     mle <- result$estimate
     value <- loglik(mle)
     mle.a <- result$estimate
@@ -341,9 +341,9 @@ function(tau, X,
 
       value
     }
-    result <- stats::nlm(f = loglik, p = c(aStart, gStart), 
+    suppressWarnings(result <- stats::nlm(f = loglik, p = c(aStart, gStart), 
                          gradtol = 1e-5, 
-                        ...)
+                        ...))
 
     mle <- result$estimate
     mle.a <- mle[1:p]
@@ -582,7 +582,7 @@ function(tau, X,
     if (is.null(Z0)) {
       mat.coef <- cbind(mle.g, bias[-(1:length(a))],
                         sqrt(diag(Cov[-(1:length(a)), -(1:length(a)), drop = F])))
-      rownames(mat.coef) <- c(paste("Z:gamma", 1:ncol(Z), sep = ""))
+      rownames(mat.coef) <- c(paste("Z effect: gamma", 1:ncol(Z), sep = ""))
       colnames(mat.coef) <- c("est", "bias", "sd")
     }
     else {

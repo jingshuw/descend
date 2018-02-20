@@ -1,6 +1,6 @@
 #' Deconvolve the true gene expression distribution  of a single gene
 #'
-#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0), and store them in a DESCEND object.
+#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on Nonzero mean (Z) and 1 - nonzero fraction (Z0), and store them in a DESCEND object.
 #'
 #' @param y a vector of observed counts across cells for a single gene
 #' @param scaling.consts a vector of cell specific scaling constants, either the cell efficiency or the library size
@@ -48,7 +48,10 @@ deconvSingle <- function(y,
 
 
   temp <- y/exp(offset)
-  lam.max <- quantile(temp[temp > 0], probs = control$max.quantile)
+  if (mean(temp == 0) < 0.95)
+    lam.max <- quantile(temp, probs = 0.98)
+  else
+    lam.max <- quantile(temp[temp > 0], probs = 0.8)
   if (control$only.integer) {
     if (lam.max <= control$n.points)
       tau <- log(1:ceiling(lam.max))
@@ -190,9 +193,7 @@ deconvSingle <- function(y,
       mu.pos <- c(mu.pos.val, 
                   sum(mu.pos.dev * bias.g[-1]), 
                   sqrt(t(mu.pos.dev) %*% result$cov.g[-1, -1] %*% mu.pos.dev))
-
     }
-    sd.pos <- sqrt(sum(theta[-1]^2 * g[-1]/(1 - g[1])) - mu.pos[1]^2)
   } else {
     p0 <- rep(0, 3)
     mu.pos <- mu
@@ -203,7 +204,7 @@ deconvSingle <- function(y,
   estimates <- rbind(one.minus.p0, mu.pos, mu, CV, 
                       gini)
   colnames(estimates) <- c("est", "bias", "sd")
-  rownames(estimates) <- c("Active Fraction", "Active Intensity", "Mean", "CV", "Gini")
+  rownames(estimates) <- c("Nonzero Fraction", "Nonzero Intensity", "Mean", "CV", "Gini")
   if (!is.null(result$stats$mat.coef))
     estimates <- rbind(estimates, result$stats$mat.coef)
 
@@ -244,8 +245,8 @@ deconvSingle <- function(y,
       else
         p1 <- p-1
       condition.list <- c(condition.list, p0 = list(list(!control$zeroInflate, Z, NULL, p1, offset)))
-      names(condition.list)[length(condition.list)] <- "Active Fraction = 1"
-      test.name <- c(test.name, "Active fraction = 1")
+      names(condition.list)[length(condition.list)] <- "Nonzero Fraction = 1"
+      test.name <- c(test.name, "Nonzero fraction = 1")
     }
     if (!is.null(Z)) {
       if (length(LRT.Z.select) == 1 || length(LRT.Z.select) == ncol(Z) &&
@@ -259,7 +260,7 @@ deconvSingle <- function(y,
           condition.list <- c(condition.list, Z = list(list(control$zeroInflate, NULL, Z0, p, offset1)))
           names(condition.list)[length(condition.list)] <- paste("Effect of Z: gamma = ",
                                                                  LRT.Z.values, sep = "")
-          test.name <- c(test.name, paste("Effect of Z: gamma = ", LRT.Z.values, sep = ""))
+          test.name <- c(test.name, paste("Effect of Z: gamma1 = ", LRT.Z.values, sep = ""))
         } else
           for(i in 1:ncol(Z)) {
             if (LRT.Z.select[i]) {
@@ -281,7 +282,7 @@ deconvSingle <- function(y,
         LRT.Z0.select <- rep(LRT.Z0.select, ncol(Z0))
         if (ncol(Z0) == 1 && LRT.Z0.select) {
           condition.list <- c(condition.list, Z0 = list(list(control$zeroInflate, Z, NULL, p - 1, offset)))
-          names(condition.list)[length(condition.list)] <- "Effect of Z0: beta = 0"
+          names(condition.list)[length(condition.list)] <- "Effect of Z0: beta1 = 0"
           test.name <- c(test.name, "Effect of Z0: beta = 0")
         } else
           for(i in 1:ncol(Z0)) {
@@ -370,8 +371,7 @@ deconvSingle <- function(y,
 #' @param n.points number of discritized points of the underlying true expression distribution. Default is 50
 #' @param nStart number of random starts for the optimization problem (as it is non-convex) to find the global minimum. Default is 2
 #' @param nStart.lrt number of random starts for the unpenalized optimization problem for likelihood ratio testing
-#' @param max.quantile the maximum quantile of the non-zero observed counts used for finding the range of the underlying true expression distribution. Default is 0.98
-#' @param max.sparse a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.95, 25). For studying active fraction, one should increase the threshold to get estimates with acceptable accuracy.
+#' @param max.sparse a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.99, 20). For studying active fraction, one should increase the threshold to get estimates with acceptable accuracy.
 #' @param LRT.Z.select a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z0.select a vector of length 1 or the number of columns of \code{Z0} indicating for which column of \code{Z0} the coefficients are tested against 0 using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z.values a vector of length 1 or the number of columns of \code{Z} showing the values that LRT tests on coefficients of \code{Z} are tested against. Default value is 0, meanings that all tests are tested against 0.
@@ -395,7 +395,6 @@ deconvSingle <- function(y,
 DESCEND.control <- function(n.points = 50,
                             nStart = 2,
                             nStart.lrt = 2,
-                            max.quantile = 0.95,
                             max.sparse = c(0.99, 20),
                             LRT.Z.select = T,
                             LRT.Z0.select = T,
@@ -419,7 +418,6 @@ DESCEND.control <- function(n.points = 50,
   n.points <- max(n.points, 10)
 
   list(n.points = n.points, nStart = nStart, nStart.lrt = nStart.lrt, 
-       max.quantile = max.quantile,
        max.sparse = max.sparse,
        rel.info.range = rel.info.range, rel.info.guide = rel.info.guide,
        c0.start = c0.start, 

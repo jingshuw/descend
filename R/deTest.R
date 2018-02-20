@@ -1,10 +1,9 @@
 #' DESCEND applied to two or more cell populations
 #'
-#' This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}. 
-#'
+#' This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted nonzero fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}. Depending on the number of cell types, number of cells and the dimension of \code{Z} and \code{Z0}, this function can take a very long time to run even on a cluster and occupy massive memory for the DESCEND results (as we have a DESCEND object for each cell type and each gene). In this scenario, we suggest users to run \code{runDescend} and save the descend result for each cell type separately, then follow the code inside this function for normalization of \code{Z0} and the calculation of \code{Z0} adjusted nonzero Fraction.
 #' @inheritParams runDescend
 #' @param labels a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}
-#' @param center.Z0 whether to center Z0 to make \code{Z0} adjusted active fraction more meaningful. Default is TRUE 
+#' @param center.Z0 whether to center Z0 to make \code{Z0} adjusted nonzero fraction more meaningful. Default is TRUE. Set it to FALSE if \code{Z0} has already been properly centered
 #'
 #' @return a list with elements
 #' \item{descend.list.list}{a list of DESCEND object lists. Each element is a DESCEND object list for one of the cell populations computed from \code{runDescend}.}
@@ -37,12 +36,12 @@
 #'  de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
 #'                          detest.result, measurement.name = "Gini", alpha = 0.05)
 #'  de.scores2 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-#'                          detest.result, measurement.name = "Active Intensity", 
+#'                          detest.result, measurement.name = "Nonzero Mean", 
 #'                          alpha = 0.05, log = "xy")
 #'  de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-#'                          detest.result, measurement.name = "Active Fraction", alpha = 0.1)
+#'                          detest.result, measurement.name = "Nonzero Fraction", alpha = 0.1)
 #'  de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-#'                          detest.result, measurement.name = "Adjusted Active Fraction", alpha = 0.1)
+#'                          detest.result, measurement.name = "Adjusted Nonzero Fraction", alpha = 0.1)
 #' }
 #'
 #' @rdname descendMultiPop
@@ -102,6 +101,11 @@ descendMultiPop <- function(count.matrix,
     }
   }
 
+  if (!file.exists("temp"))
+    dir.create("temp")
+  print("Directory ./temp will be used to store DESCEND result for each cell type!")
+
+
 
   result.list <- lapply(levels(labels), function(str) {
                               print(paste("DESCEND is applied to cell population", 
@@ -119,7 +123,7 @@ descendMultiPop <- function(count.matrix,
                               else
                                 Z0.temp <- NULL
 
-                              return(runDescend(count.matrix[, idx],
+                              result <- runDescend(count.matrix[, idx],
                                                 ercc.matrix = NULL,
                                                 scaling.consts = scaling.consts.temp,
                                                 Z = Z.temp,
@@ -128,11 +132,22 @@ descendMultiPop <- function(count.matrix,
                                                 do.LRT.test = do.LRT.test,
                                                 family = family, NB.size = NB.size,
                                                 verbose = verbose, show.message = show.message,
-                                                control = control))
+                                                control = control)
+                              save(result, file = paste("temp/DESCEND_result_", str, ".rda", sep = ""))
+                              rm(result)
+                              gc()
+                              print(paste("Results for", str, "saved."))
+                              return(list())
                             })
+
+  result.list <- lapply(levels(labels), function(str) {
+                             load(paste("temp/DESCEND_result_", str, ".rda", sep = ""))
+                             return(result)
+                            }) 
+
   names(result.list) <- levels(labels)
 
-  ## compute Z0 adjusted active fraction
+  ## compute Z0 adjusted nonzero fraction
   if (!is.null(Z0)) {
     result.list <- lapply(result.list, 
                           function(ll) {
@@ -151,7 +166,7 @@ descendMultiPop <- function(count.matrix,
                                         lll@estimates <- rbind(lll@estimates[1:5,,drop = F],
                                                                temp,
                                                   lll@estimates[-(1:5),, drop = F])
-                                        rownames(lll@estimates)[6] <- "Z0 Adjusted Active Fraction"
+                                        rownames(lll@estimates)[6] <- "Z0 Adjusted Nonzero Fraction"
                                         return(lll)
                               
                               })
@@ -175,6 +190,7 @@ descendMultiPop <- function(count.matrix,
 #' @param de.pair.names a vector of length 2 showing the two cell population names for differential testing. The names should match the values in \code{labels}
 #' @param N.genes.null number of permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be (the minimum p-value can be as small as 0.5/N.genes.null)
 #' @param alternative the alternative hypotheses for differential testing
+#' @param params by default, it is descend.multipop.output$params, but users can provide their own in special cases
 #'
 #' @return a list with elements
 #' \item{p.values}{a matrix of p-values calculated from permutation tests. Each row is a gene and each column is a distribution measurement of coefficient (if \code{Z} or \code{Z0} is presented)}
@@ -191,11 +207,12 @@ deTest <- function(descend.multipop.output,
                    N.genes.null = 10000,
                    alternative = c("two.sided", "less", "greater"),
                    n.cores = 1, cl = NULL, type = "FORK",
-                   verbose = T, show.message = T) {
+                   verbose = T, show.message = T, params = NULL) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
-  params <- descend.multipop.output$model
+  if (is.null(params))
+    params <- descend.multipop.output$model
 
   n.perm.rounds <- ceiling(N.genes.null / nrow(count.matrix))
   N.genes <- nrow(count.matrix)
@@ -249,7 +266,8 @@ deTest <- function(descend.multipop.output,
 
   ori.ests.list <- lapply(descend.multipop.output$descend.list.list[as.factor(de.pair.names)], 
                           getEstimates)
-  ori.scores <- sapply(1:m, function(j) {
+  m1 <- length(ori.ests.list[[1]])
+  ori.scores <- sapply(1:m1, function(j) {
                             mat1 <- ori.ests.list[[1]][[j]]
                             mat2 <- ori.ests.list[[2]][[j]]
 
@@ -259,10 +277,22 @@ deTest <- function(descend.multipop.output,
                             })
   colnames(ori.scores) <- names(ori.ests.list[[1]])
 
+  if (m1 != m) {
+    warnings(paste("Number of parameters", m, 
+                   "in permutation does not match number of parameters", m1,
+                   "in the original result!! Parameters matched by names and unmatched columns are removed. 
+                   Be careful when using the result."))
+    mm.names <- intersect(colnames(ori.scores), colnames(perm.scores))
+    ori.scores <- ori.scores[, mm.names]
+    perm.scores <- perm.scores[, mm.names]
+    m <- length(mm.names)
+  }
+
+
   pvals <- sapply(1:m, function(j) {
                   if (alternative == "two.sided") {
-                    null.vals <- sort(abs(perm.scores[, j]))
-                    temp <- sort(abs(ori.scores[, j]), index.return = T, na.last = T)
+                    null.vals <- sort(perm.scores[, j])
+                    temp <- sort(ori.scores[, j], index.return = T, na.last = T)
                   } else if (alternative == "less") {
                     null.vals <- sort(-perm.scores[, j])
                     temp <- sort(-ori.scores[, j], index.return = T, na.last = T)
@@ -282,7 +312,14 @@ deTest <- function(descend.multipop.output,
                     else
                       ranks[k1] <- k2
                   }
+                  if (alternative == "two.sided")
+                    ranks[temp$x < 0 & (!is.na(temp$x))] <- length(null.vals) - 
+                    ranks[temp$x < 0 & (!is.na(temp$x))]
+
                   pp <- (length(null.vals) - ranks + 0.5)/length(null.vals)
+                  if (alternative == "two.sided")
+                    pp <- pp *2
+
                   pp[temp$ix] <- pp
                   pp[pp > 1] <- 1
 
@@ -316,8 +353,8 @@ deTest.more <- function(descend.multipop.output,
                         labels,
                         N.more.genes = 10000,
                         alternative = c("two.sided", "less", "greater"),
-                        n.cores = 1, cl = NULL, type = "FORK",
-                        verbose = T, show.message = T) {
+                        n.cores = 1, cl = NULL, type = "FORK",  
+                        verbose = T, show.message = T, params = NULL) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
@@ -377,7 +414,8 @@ deTest.more <- function(descend.multipop.output,
 
   ori.ests.list <- lapply(descend.multipop.output$descend.list.list[as.factor(de.pair.names)], 
                           getEstimates)
-  ori.scores <- sapply(1:m, function(j) {
+  m1 <- length(ori.ests.list[[1]])
+  ori.scores <- sapply(1:m1, function(j) {
                             mat1 <- ori.ests.list[[1]][[j]]
                             mat2 <- ori.ests.list[[2]][[j]]
 
@@ -387,10 +425,21 @@ deTest.more <- function(descend.multipop.output,
                             })
   colnames(ori.scores) <- names(ori.ests.list[[1]])
 
+  if (m1 != m) {
+    warnings(paste("Number of parameters", m, 
+                   "in permutation does not match number of parameters", m1,
+                   "in the original result!! Parameters matched by names and unmatched columns are removed. 
+                   Be careful when using the result."))
+    mm.names <- intercept(colnames(ori.scores), colnames(perm.scores))
+    ori.scores <- ori.scores[, mm.names]
+    perm.scores <- perm.scores[, mm.scores]
+    m <- length(mm.names)
+  }
+
   pvals <- sapply(1:m, function(j) {
                   if (alternative == "two.sided") {
-                    null.vals <- sort(abs(perm.scores[, j]))
-                    temp <- sort(abs(ori.scores[, j]), index.return = T, na.last = T)
+                    null.vals <- sort(perm.scores[, j])
+                    temp <- sort(ori.scores[, j], index.return = T, na.last = T)
                   } else if (alternative == "less") {
                     null.vals <- sort(-perm.scores[, j])
                     temp <- sort(-ori.scores[, j], index.return = T, na.last = T)
@@ -410,7 +459,14 @@ deTest.more <- function(descend.multipop.output,
                     else
                       ranks[k1] <- k2
                   }
+                  if (alternative == "two.sided")
+                    ranks[temp$x < 0 & (!is.na(temp$x))] <- length(null.vals) - 
+                    ranks[temp$x < 0 & (!is.na(temp$x))]
+
                   pp <- (length(null.vals) - ranks + 0.5)/length(null.vals)
+                  if (alternative == "two.sided")
+                    pp <- pp *2
+
                   pp[temp$ix] <- pp
                   pp[pp > 1] <- 1
 

@@ -3,7 +3,7 @@
 #' Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed. For deconvolution of two or more cell populations, see \code{\link{descendMultiPop}}. For model details, see \code{\link{deconvG}}. 
 #'
 #' @inheritParams deconvSingle
-#' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.
+#' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.
 #' @param ercc.matrix the ERCC spike-ins are used for computing the cell-specific efficiency constants as \code{scaling.consts} when \code{scaling.consts} is NULL. Each row is a spike-in genes and each column is a cell. The number and order of the columns should be the same as the number and order of the columns of \code{count.matrix}.
 #' @param ercc.trueMol the true input number of molecules of the ercc spike-ins when \code{ercc.matrix} is not NULL.
 #' @param n.cores the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.
@@ -12,7 +12,7 @@
 #' @param show.message whether show messages for the computing progresses. Default is TRUE
 #'
 #'
-#' @return a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution.
+#' @return a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution. 
 #'
 #' @examples
 #' \dontrun{
@@ -49,13 +49,15 @@ runDescend <- function(count.matrix,
                        n.cores = 1, cl = NULL, type = "FORK",
                        do.LRT.test = F, 
                        family = c("Poisson", "Negative Binomial"),
-                       NB.size = 100,
+                       NB.size = NULL,
                        show.message = T,
                        verbose = T, 
                        ercc.trueMol = NULL,
                        control = list()) {
 
    control <- do.call("DESCEND.control", control)
+  if (family == "Negative Binomial" && is.null(NB.size))
+    stop("If the Negative Binomial distribution is chosen as the technical noise distribution, then NB.size (1/over-dispersion) parameter must be first estimated from ERCC spike-ins!")
 
   Y <- as.matrix(count.matrix)
   gene.names <- rownames(Y)
@@ -89,7 +91,7 @@ runDescend <- function(count.matrix,
 
   if (show.message) {
     print(paste("DESCEND starts deconvolving distribution of", 
-                length(gene.names), "genes!"))
+                nrow(Y), "genes!"))
 
     print("Estimating the time to finish this task ...")
   }
@@ -98,8 +100,12 @@ runDescend <- function(count.matrix,
     n.cores <- length(parallel::clusterCall(cl, print, 1))
   }
 
-  while(T) {
-    idx <- sample(1:nrow(Y), min(3, nrow(Y)))
+  for (iter in 1:10) {
+    if (iter == 10) {
+      print("Cannot estimate the time to finish, the program continues. If you want get an estimated time, please filter out sparse genes first ...")
+      break
+    }
+    idx <- sample(1:nrow(Y), min(5, nrow(Y)))
     tt <- system.time(temp <- apply(Y[idx, ], 1, function(v) {
                                     try(deconvSingle(v,
                                                      scaling.consts = scaling.consts,
@@ -109,11 +115,11 @@ runDescend <- function(count.matrix,
                                                      family = family, 
                                                      NB.size = NB.size,
                                                      control = control, verbose = F), silent = T)}))
-    if (sum(sapply(temp, function(ll)class(ll) != "DESCEND")) != min(3, nrow(Y)))
+    if (sum(sapply(temp, function(ll)class(ll) != "DESCEND")) != min(5, nrow(Y)))
       break
   }
 
-  if (show.message)
+  if (show.message && (iter < 10))
     print(paste("Estimated total time is", 
                 ceiling(tt[3]/sum(sapply(temp, 
                                          function(ll)class(ll) == "DESCEND")) * nrow(Y)/60), 
@@ -142,7 +148,9 @@ runDescend <- function(count.matrix,
       requireNamespace("descend")
 
       if (verbose)
-        print(paste("Start computing for one gene!", Sys.time()))
+        print(paste("Computing a new gene! Worker pid=", 
+                    Sys.getpid(), Sys.time()))
+      
     
       temp <- try(deconvSingle(as.vector(v),
                                scaling.consts = scaling.consts,
@@ -220,7 +228,7 @@ getPval <- function(descend.list) {
                         return(NA)
                     })
 
-  idx <- which(!sapply(temp, is.na))[1]
+  idx <- which(sapply(temp, function(val) class(val) == "matrix"))[1]
   n.test <- nrow(temp[[idx]])
   if (n.test == 0) {
     print("The likelihood ratio tests were not performed")
@@ -234,6 +242,7 @@ getPval <- function(descend.list) {
                         mm <- matrix(NA, n.test, 1)
                         colnames(mm) <- report.names
                         rownames(mm) <- test.names
+                        return(mm)
                       }
                       else
                         return(mat)
