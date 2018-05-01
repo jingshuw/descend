@@ -1,12 +1,12 @@
 #' Deconvolve the true gene expression distribution  of a single gene
 #'
-#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on Nonzero mean (Z) and 1 - nonzero fraction (Z0), and store them in a DESCEND object.
+#' The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (nonzero fraction, nonzero mean, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on Nonzero mean (Z) and 1 - nonzero fraction (Z0), and store them in a DESCEND object.
 #'
 #' @param y a vector of observed counts across cells for a single gene
 #' @param scaling.consts a vector of cell specific scaling constants, either the cell efficiency or the library size
 #' @inheritParams deconvG
 #' @param plot.density whether plot the density curve of the deconvolved the distribution or not. The zero inflation part has been smoothed into the density curve for visualization. Default is True.
-#' @param do.LRT.test whether do LRT test on the coefficients and active fraction or not. Default is True
+#' @param do.LRT.test whether do LRT test on the coefficients and nonzero fraction or not. Default is True
 #' @param verbose verbose the estimation and testing procedures or not. Default is True.
 #' @param control settings see {\code{\link{DESCEND.control}}}
 #'
@@ -371,7 +371,7 @@ deconvSingle <- function(y,
 #' @param n.points number of discritized points of the underlying true expression distribution. Default is 50
 #' @param nStart number of random starts for the optimization problem (as it is non-convex) to find the global minimum. Default is 2
 #' @param nStart.lrt number of random starts for the unpenalized optimization problem for likelihood ratio testing
-#' @param max.sparse a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.99, 20). For studying active fraction, one should increase the threshold to get estimates with acceptable accuracy.
+#' @param max.sparse a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.99, 20). For studying nonzero fraction, one should increase the threshold to get estimates with acceptable accuracy.
 #' @param LRT.Z.select a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z0.select a vector of length 1 or the number of columns of \code{Z0} indicating for which column of \code{Z0} the coefficients are tested against 0 using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.
 #' @param LRT.Z.values a vector of length 1 or the number of columns of \code{Z} showing the values that LRT tests on coefficients of \code{Z} are tested against. Default value is 0, meanings that all tests are tested against 0.

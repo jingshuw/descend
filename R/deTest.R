@@ -316,7 +316,7 @@ deTest <- function(descend.multipop.output,
                     ranks[temp$x < 0 & (!is.na(temp$x))] <- length(null.vals) - 
                     ranks[temp$x < 0 & (!is.na(temp$x))]
 
-                  pp <- (length(null.vals) - ranks + 0.5)/length(null.vals)
+                  pp <- (length(null.vals) - ranks + 0.25)/length(null.vals)
                   if (alternative == "two.sided")
                     pp <- pp *2
 
