@@ -13,13 +13,13 @@ deconvSingle(y, scaling.consts = NULL, Z = NULL, Z0 = NULL,
 
 \item{scaling.consts}{a vector of cell specific scaling constants, either the cell efficiency or the library size}
 
-\item{Z}{covariates for active intensity. Default is NULL.}
+\item{Z}{covariates for nonzero mean. Default is NULL.}
 
-\item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
+\item{Z0}{covariates for nonzero fraction. Used only when zeroInflate is True. Default is NULL.}
 
 \item{plot.density}{whether plot the density curve of the deconvolved the distribution or not. The zero inflation part has been smoothed into the density curve for visualization. Default is True.}
 
-\item{do.LRT.test}{whether do LRT test on the coefficients and active fraction or not. Default is True}
+\item{do.LRT.test}{whether do LRT test on the coefficients and nonzero fraction or not. Default is True}
 
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 
@@ -33,7 +33,7 @@ deconvSingle(y, scaling.consts = NULL, Z = NULL, Z0 = NULL,
 a DESCEND object. See also \code{\link{DESCEND}}
 }
 \description{
-The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (active fraction, active intensity, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on active intensity (Z) and active fraction (Z0), and store them in a DESCEND object.
+The deconvolution is computed by using the function {\code{\link{deconvG}}}. This function can automatically discretize the underlying distribution and find the proper tuning parameter \code{c0} of the penalty term. Besides, it computes the estimates and standard deviations of five distribution based statistics (nonzero fraction, nonzero mean, mean, CV and gini coefficient), as well as the estimated coefficients of the covariates on Nonzero mean (Z) and 1 - nonzero fraction (Z0), and store them in a DESCEND object.
 }
 \examples{
 

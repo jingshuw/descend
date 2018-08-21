@@ -22,9 +22,9 @@ deconvG(tau, X, offset, family = c("Poisson", "Negative Binomial"),
 
 \item{zeroInflate}{whether add zero inflation part to the deconvolved distribution to reflect transcriptional bursting. Default is True.}
 
-\item{Z}{covariates for active intensity. Default is NULL.}
+\item{Z}{covariates for nonzero mean. Default is NULL.}
 
-\item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
+\item{Z0}{covariates for nonzero fraction. Used only when zeroInflate is True. Default is NULL.}
 
 \item{c0}{the tuning parameter on the L2 penalty term. Default is 1. c0 will be selected automatically in \code{deconvSingle}}
 

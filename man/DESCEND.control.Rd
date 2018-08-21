@@ -5,12 +5,11 @@
 \title{The control parameters of the function \code{\link{runDescend}} and \code{\link{deconvSingle}}}
 \usage{
 DESCEND.control(n.points = 50, nStart = 2, nStart.lrt = 2,
-  max.quantile = 0.95, max.sparse = c(0.99, 20), LRT.Z.select = T,
-  LRT.Z0.select = T, LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T,
-  only.integer = F, rel.info.range = c(5e-04, 0.01),
-  rel.info.guide = 0.005, c0.start = 1, aStart = 1, bStart = 0,
-  gStart = 0, start.sd = 0.2, penalty.Z0 = T, pDegree = 5,
-  max.c0.iter = 5, c0.min = 1e-05)
+  max.sparse = c(0.99, 20), LRT.Z.select = T, LRT.Z0.select = T,
+  LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T, only.integer = F,
+  rel.info.range = c(5e-04, 0.01), rel.info.guide = 0.005, c0.start = 1,
+  aStart = 1, bStart = 0, gStart = 0, start.sd = 0.2, penalty.Z0 = T,
+  pDegree = 5, max.c0.iter = 5, c0.min = 1e-05)
 }
 \arguments{
 \item{n.points}{number of discritized points of the underlying true expression distribution. Default is 50}
@@ -19,9 +18,7 @@ DESCEND.control(n.points = 50, nStart = 2, nStart.lrt = 2,
 
 \item{nStart.lrt}{number of random starts for the unpenalized optimization problem for likelihood ratio testing}
 
-\item{max.quantile}{the maximum quantile of the non-zero observed counts used for finding the range of the underlying true expression distribution. Default is 0.98}
-
-\item{max.sparse}{a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.95, 25). For studying active fraction, one should increase the threshold to get estimates with acceptable accuracy.}
+\item{max.sparse}{a vector of 2 indicating the maximum sparsity allowed for a gene to be computed. The first element is the fraction of zero-counts allowed, the second element is the minimum number of non-zero counts. Both criteria should be satisfied. Default is (0.99, 20). For studying nonzero fraction, one should increase the threshold to get estimates with acceptable accuracy.}
 
 \item{LRT.Z.select}{a vector of length 1 or the number of columns of \code{Z} indicating for which column of \code{Z} the coefficients are tested against the corresponding value in \code{LRT.Z.values} using LRT. Default is TRUE, meaning that all columns are tested when LRT tests are performed.}
 

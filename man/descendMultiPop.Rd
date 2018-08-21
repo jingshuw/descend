@@ -11,7 +11,7 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
   ercc.trueMol = NULL, center.Z0 = T, control = list())
 }
 \arguments{
-\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
+\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
 
 \item{labels}{a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}}
 
@@ -19,9 +19,9 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
 
 \item{scaling.consts}{a vector of cell specific scaling constants, either the cell efficiency or the library size}
 
-\item{Z}{covariates for active intensity. Default is NULL.}
+\item{Z}{covariates for nonzero mean. Default is NULL.}
 
-\item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
+\item{Z0}{covariates for nonzero fraction. Used only when zeroInflate is True. Default is NULL.}
 
 \item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
@@ -29,7 +29,7 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
 
 \item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
 
-\item{do.LRT.test}{whether do LRT test on the coefficients and active fraction or not. Default is True}
+\item{do.LRT.test}{whether do LRT test on the coefficients and nonzero fraction or not. Default is True}
 
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 
@@ -41,7 +41,7 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
 
 \item{ercc.trueMol}{the true input number of molecules of the ercc spike-ins when \code{ercc.matrix} is not NULL.}
 
-\item{center.Z0}{whether to center Z0 to make \code{Z0} adjusted active fraction more meaningful. Default is TRUE}
+\item{center.Z0}{whether to center Z0 to make \code{Z0} adjusted nonzero fraction more meaningful. Default is TRUE. Set it to FALSE if \code{Z0} has already been properly centered}
 
 \item{control}{settings see {\code{\link{DESCEND.control}}}}
 }
@@ -51,13 +51,14 @@ a list with elements
 \item{model}{model parameters, including the actual \code{scaling.consts}, \code{Z}, the rescaled \code{Z0}, \code{control}, \code{family} and \code{NB.size}}
 }
 \description{
-This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted active fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}.
+This function is used when two or more cell populations are compared with each other and is a first step for differential testing between any two of the cell populations. The true expression distribution is deconvolved for each cell population separately while \code{Z0} is scaled to have mean 0 (combining all populations) to compute a meaningful \code{Z0} adjusted nonzero fraction. For deconvolution of a single cell population, see \code{\link{runDescend}}. For model details, see \code{\link{deconvG}}. Depending on the number of cell types, number of cells and the dimension of \code{Z} and \code{Z0}, this function can take a very long time to run even on a cluster and occupy massive memory for the DESCEND results (as we have a DESCEND object for each cell type and each gene). In this scenario, we suggest users to run \code{runDescend} and save the descend result for each cell type separately, then follow the code inside this function for normalization of \code{Z0} and the calculation of \code{Z0} adjusted nonzero Fraction.
 }
 \examples{
 \dontrun{
 data(zeisel)
  set.seed(1)
- ## For a Windows machine add the argument: type = "PSOCK" to each of the function that need parallization.
+ ## For a Windows machine add the argument: 
+ ## type = "PSOCK" to each of the function that need parallization.
  result.multi <- descendMultiPop(zeisel$count.matrix.small,
                                  labels = zeisel$labels,
                                  scaling.consts = zeisel$library.size,
@@ -80,12 +81,12 @@ data(zeisel)
  de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                          detest.result, measurement.name = "Gini", alpha = 0.05)
  de.scores2 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                         detest.result, measurement.name = "Active Intensity", 
+                         detest.result, measurement.name = "Nonzero Mean", 
                          alpha = 0.05, log = "xy")
  de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                         detest.result, measurement.name = "Active Fraction", alpha = 0.1)
+                         detest.result, measurement.name = "Nonzero Fraction", alpha = 0.1)
  de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                         detest.result, measurement.name = "Adjusted Active Fraction", alpha = 0.1)
+                         detest.result, measurement.name = "Adjusted Nonzero Fraction", alpha = 0.1)
 }
 
 }

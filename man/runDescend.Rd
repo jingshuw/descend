@@ -7,19 +7,19 @@
 runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
   Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL, type = "FORK",
   do.LRT.test = F, family = c("Poisson", "Negative Binomial"),
-  NB.size = 100, show.message = T, verbose = T, ercc.trueMol = NULL,
+  NB.size = NULL, show.message = T, verbose = T, ercc.trueMol = NULL,
   control = list())
 }
 \arguments{
-\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
+\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
 
 \item{ercc.matrix}{the ERCC spike-ins are used for computing the cell-specific efficiency constants as \code{scaling.consts} when \code{scaling.consts} is NULL. Each row is a spike-in genes and each column is a cell. The number and order of the columns should be the same as the number and order of the columns of \code{count.matrix}.}
 
 \item{scaling.consts}{a vector of cell specific scaling constants, either the cell efficiency or the library size}
 
-\item{Z}{covariates for active intensity. Default is NULL.}
+\item{Z}{covariates for nonzero mean. Default is NULL.}
 
-\item{Z0}{covariates for active fraction. Used only when zeroInflate is True. Default is NULL.}
+\item{Z0}{covariates for nonzero fraction. Used only when zeroInflate is True. Default is NULL.}
 
 \item{n.cores}{the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.}
 
@@ -27,7 +27,7 @@ runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
 
 \item{type}{Default is "FORK" to save memory. Change it to "PSOCK" if you are using Windows and cl is NULL. More details see \code{\link[parallel]{makeCluster}}}
 
-\item{do.LRT.test}{whether do LRT test on the coefficients and active fraction or not. Default is True}
+\item{do.LRT.test}{whether do LRT test on the coefficients and nonzero fraction or not. Default is True}
 
 \item{family}{family of the noise distribution, support either "Poisson" or "Negative Binomial" with known tuning parameter}
 

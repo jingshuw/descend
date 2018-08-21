@@ -7,7 +7,7 @@
 deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
   labels, N.more.genes = 10000, alternative = c("two.sided", "less",
   "greater"), n.cores = 1, cl = NULL, type = "FORK", verbose = T,
-  show.message = T)
+  show.message = T, params = NULL, compare.covariates = T)
 }
 \arguments{
 \item{descend.multipop.output}{the returned value of \code{\link{descendMultiPop}}}
@@ -16,7 +16,7 @@ deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
 
 \item{de.pair.names}{a vector of length 2 showing the two cell population names for differential testing. The names should match the values in \code{labels}}
 
-\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
+\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
 
 \item{labels}{a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}}
 
@@ -33,6 +33,10 @@ deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
 \item{verbose}{verbose the estimation and testing procedures or not. Default is True.}
 
 \item{show.message}{whether show messages for the computing progresses. Default is TRUE}
+
+\item{params}{by default, it is descend.multipop.output$params, but users can provide their own in special cases}
+
+\item{compare.covariates}{whether also perform differential testing on the coefficients of the covaraites \code{Z} and \code{Z0}. Need to set to FALSE if the number of covariates is not the same in the two cell populations}
 }
 \value{
 same as \code{\link{deTest}}

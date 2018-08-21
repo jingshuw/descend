@@ -13,7 +13,8 @@
 #' \dontrun{
 #' data(zeisel)
 #'  set.seed(1)
-#'  ## For a Windows machine add the argument: type = "PSOCK" to each of the function that need parallization.
+#'  ## For a Windows machine add the argument: 
+#'  ## type = "PSOCK" to each of the function that need parallization.
 #'  result.multi <- descendMultiPop(zeisel$count.matrix.small,
 #'                                  labels = zeisel$labels,
 #'                                  scaling.consts = zeisel$library.size,
@@ -62,7 +63,8 @@ descendMultiPop <- function(count.matrix,
                             ercc.trueMol = NULL,
                             center.Z0 = T, 
                             control = list()) {
-    
+   
+  count.matrix <- as.matrix(count.matrix)
   if (ncol(count.matrix) != length(labels)) {
     stop("Every cell need to have a cell population label. The length of labels need to match the number of columns of count.matrix!")
   }
@@ -114,16 +116,16 @@ descendMultiPop <- function(count.matrix,
                               scaling.consts.temp <- scaling.consts[idx]
                           
                               if (!is.null(Z)) 
-                                Z.temp <- Z[idx, ]
+                                Z.temp <- Z[idx, , drop = F]
                               else
                                 Z.temp <- NULL
 
                               if (!is.null(Z0))
-                                Z0.temp <- Z0[idx, ]
+                                Z0.temp <- Z0[idx, , drop = F]
                               else
                                 Z0.temp <- NULL
 
-                              result <- runDescend(count.matrix[, idx],
+                              result <- runDescend(count.matrix[, idx, drop = F],
                                                 ercc.matrix = NULL,
                                                 scaling.consts = scaling.consts.temp,
                                                 Z = Z.temp,
@@ -191,6 +193,7 @@ descendMultiPop <- function(count.matrix,
 #' @param N.genes.null number of permuted genes. The larger the value is, the longer it takes and the smaller the minimum p-value can be (the minimum p-value can be as small as 0.5/N.genes.null)
 #' @param alternative the alternative hypotheses for differential testing
 #' @param params by default, it is descend.multipop.output$params, but users can provide their own in special cases
+#' @param compare.covariates whether also perform differential testing on the coefficients of the covaraites \code{Z} and \code{Z0}. Need to set to FALSE if the number of covariates is not the same in the two cell populations
 #'
 #' @return a list with elements
 #' \item{p.values}{a matrix of p-values calculated from permutation tests. Each row is a gene and each column is a distribution measurement of coefficient (if \code{Z} or \code{Z0} is presented)}
@@ -207,7 +210,8 @@ deTest <- function(descend.multipop.output,
                    N.genes.null = 10000,
                    alternative = c("two.sided", "less", "greater"),
                    n.cores = 1, cl = NULL, type = "FORK",
-                   verbose = T, show.message = T, params = NULL) {
+                   verbose = T, show.message = T, params = NULL,
+                   compare.covariates = T) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
@@ -237,7 +241,7 @@ deTest <- function(descend.multipop.output,
     else
       gene.idx <- 1:N.genes
 
-    temp <- descendMultiPop(count.matrix[gene.idx, perm.idx],
+    temp <- descendMultiPop(count.matrix[gene.idx, perm.idx, drop = F],
                             labels = temp.label,
                             scaling.consts = params$scaling.consts[perm.idx],
                             Z = params$Z[perm.idx,], 
@@ -267,6 +271,9 @@ deTest <- function(descend.multipop.output,
   ori.ests.list <- lapply(descend.multipop.output$descend.list.list[as.factor(de.pair.names)], 
                           getEstimates)
   m1 <- length(ori.ests.list[[1]])
+  if (!compare.covariates) {
+    m1 <- 5
+  }
   ori.scores <- sapply(1:m1, function(j) {
                             mat1 <- ori.ests.list[[1]][[j]]
                             mat2 <- ori.ests.list[[2]][[j]]
@@ -275,7 +282,7 @@ deTest <- function(descend.multipop.output,
                               sqrt(mat1[ ,2]^2 + mat2[ ,2]^2)
                             return(scores)
                             })
-  colnames(ori.scores) <- names(ori.ests.list[[1]])
+  colnames(ori.scores) <- names(ori.ests.list[[1]][1:m1])
 
   if (m1 != m) {
     warnings(paste("Number of parameters", m, 
@@ -354,11 +361,13 @@ deTest.more <- function(descend.multipop.output,
                         N.more.genes = 10000,
                         alternative = c("two.sided", "less", "greater"),
                         n.cores = 1, cl = NULL, type = "FORK",  
-                        verbose = T, show.message = T, params = NULL) {
+                        verbose = T, show.message = T, params = NULL,
+                        compare.covariates = T) {
 
   alternative <- match.arg(alternative, c("two.sided", "less", "greater"))
 
   params <- descend.multipop.output$model
+  count.matrix <- as.matrix(count.matrix)
 
   n.perm.rounds <- ceiling(N.more.genes / nrow(count.matrix))
   N.genes <- nrow(count.matrix)
@@ -384,7 +393,7 @@ deTest.more <- function(descend.multipop.output,
     else
       gene.idx <- 1:N.genes
 
-    temp <- descendMultiPop(count.matrix[gene.idx, perm.idx],
+    temp <- descendMultiPop(count.matrix[gene.idx, perm.idx, drop = F],
                             labels = temp.label,
                             scaling.consts = params$scaling.consts[perm.idx],
                             Z = params$Z[perm.idx,], 
@@ -415,6 +424,9 @@ deTest.more <- function(descend.multipop.output,
   ori.ests.list <- lapply(descend.multipop.output$descend.list.list[as.factor(de.pair.names)], 
                           getEstimates)
   m1 <- length(ori.ests.list[[1]])
+  if (!compare.covariates) {
+    m1 <- 5
+  }
   ori.scores <- sapply(1:m1, function(j) {
                             mat1 <- ori.ests.list[[1]][[j]]
                             mat2 <- ori.ests.list[[2]][[j]]
@@ -423,16 +435,16 @@ deTest.more <- function(descend.multipop.output,
                               sqrt(mat1[ ,2]^2 + mat2[ ,2]^2)
                             return(scores)
                             })
-  colnames(ori.scores) <- names(ori.ests.list[[1]])
+  colnames(ori.scores) <- names(ori.ests.list[[1]][1:m1])
 
   if (m1 != m) {
     warnings(paste("Number of parameters", m, 
                    "in permutation does not match number of parameters", m1,
                    "in the original result!! Parameters matched by names and unmatched columns are removed. 
                    Be careful when using the result."))
-    mm.names <- intercept(colnames(ori.scores), colnames(perm.scores))
+    mm.names <- intersect(colnames(ori.scores), colnames(perm.scores))
     ori.scores <- ori.scores[, mm.names]
-    perm.scores <- perm.scores[, mm.scores]
+    perm.scores <- perm.scores[, mm.names]
     m <- length(mm.names)
   }
 

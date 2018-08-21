@@ -55,7 +55,7 @@ runDescend <- function(count.matrix,
                        ercc.trueMol = NULL,
                        control = list()) {
 
-   control <- do.call("DESCEND.control", control)
+  control <- do.call("DESCEND.control", control)
   if (family == "Negative Binomial" && is.null(NB.size))
     stop("If the Negative Binomial distribution is chosen as the technical noise distribution, then NB.size (1/over-dispersion) parameter must be first estimated from ERCC spike-ins!")
 
@@ -72,6 +72,8 @@ runDescend <- function(count.matrix,
     if (is.null(ercc.matrix) || is.null(ercc.trueMol)) {
       if (!is.null(ercc.matrix))
         print("The input number of molecules for the ERCC spike-in genes are not provided, library size normalization is used instead.")
+
+      print("Scaling countants are not provded, using the column sums as scaling constants ")
 
       scaling.consts <- colSums(Y)
     }
@@ -106,7 +108,7 @@ runDescend <- function(count.matrix,
       break
     }
     idx <- sample(1:nrow(Y), min(5, nrow(Y)))
-    tt <- system.time(temp <- apply(Y[idx, ], 1, function(v) {
+    tt <- system.time(temp <- apply(Y[idx, , drop = F], 1, function(v) {
                                     try(deconvSingle(v,
                                                      scaling.consts = scaling.consts,
                                                      Z = Z, Z0 = Z0,
@@ -146,7 +148,7 @@ runDescend <- function(count.matrix,
     results <-  foreach(v = iter(Y, "row"),
                         .noexport = c("Y")) %dopar% {
       requireNamespace("descend")
-
+   
       if (verbose)
         print(paste("Computing a new gene! Worker pid=", 
                     Sys.getpid(), Sys.time()))
