@@ -360,7 +360,7 @@ deconvSingle <- function(y,
                 distribution = result$stats$mat.dist,
                 estimates = estimates,
                 density.points = density.points)
-  if (!is.na(pval))
+  if (!is.na(pval[1]))
     result@pval <- pval
 
   return(result)
