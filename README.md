@@ -74,3 +74,7 @@ install_github("jingshuw/descend")
   de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                           detest.result, measurement.name = "Z0 Adjusted Active Fraction", alpha = 0.1)
 ```
+
+## More case study examples 
+
+### Source code of how the case studies in the paper are performed with DESCEND, please check the repository jingshuw/DESCEND_manuscript_source_code

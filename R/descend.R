@@ -3,7 +3,7 @@
 #' Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed. For deconvolution of two or more cell populations, see \code{\link{descendMultiPop}}. For model details, see \code{\link{deconvG}}. 
 #'
 #' @inheritParams deconvSingle
-#' @param count.matrix the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.
+#' @param count.matrix the observed UMI count matrix. It should be an R object of class \code{matrix} or \code{dgeMatrix}. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.
 #' @param ercc.matrix the ERCC spike-ins are used for computing the cell-specific efficiency constants as \code{scaling.consts} when \code{scaling.consts} is NULL. Each row is a spike-in genes and each column is a cell. The number and order of the columns should be the same as the number and order of the columns of \code{count.matrix}.
 #' @param ercc.trueMol the true input number of molecules of the ercc spike-ins when \code{ercc.matrix} is not NULL.
 #' @param n.cores the number of cores used for parallel computing. Default is 1. Used only when parallel computing is done in a single machine. For using multi-machine cores, need to assign \code{cl} explicitly. If \code{verbose} is TRUE, then a separated file is created to store the progress of each slave cores.
@@ -12,7 +12,8 @@
 #' @param show.message whether show messages for the computing progresses. Default is TRUE
 #'
 #'
-#' @return a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution. 
+#' @return a list of DESCEND objects. The length of the list is the same as the number of genes. 
+#' See also \code{\link{DESCEND}}. NA if the gene is too sparse or DESCEND fails to find a solution. 
 #'
 #' @examples
 #' \dontrun{
