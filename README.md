@@ -75,6 +75,6 @@ install_github("jingshuw/descend")
                           detest.result, measurement.name = "Z0 Adjusted Active Fraction", alpha = 0.1)
 ```
 
-## More case study examples 
+## More case study examples: 
 
-### Source code of how the case studies in the paper are performed with DESCEND, please check the repository jingshuw/DESCEND_manuscript_source_code
+### For Source code of how the case studies in the paper are performed with DESCEND, please check the repository jingshuw/DESCEND_manuscript_source_code
