@@ -11,7 +11,7 @@ descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
   ercc.trueMol = NULL, center.Z0 = T, control = list())
 }
 \arguments{
-\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
+\item{count.matrix}{the observed UMI count matrix. It should be an R object of class \code{matrix} or \code{dgeMatrix}. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
 
 \item{labels}{a vector of factors or characters, indicating the cell popluation label of each cell. The length of \code{labels} should be the same as the number of columns of \code{count.matrix}}
 

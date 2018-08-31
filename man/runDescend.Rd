@@ -11,7 +11,7 @@ runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
   control = list())
 }
 \arguments{
-\item{count.matrix}{the observed UMI count matrix. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
+\item{count.matrix}{the observed UMI count matrix. It should be an R object of class \code{matrix} or \code{dgeMatrix}. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}
 
 \item{ercc.matrix}{the ERCC spike-ins are used for computing the cell-specific efficiency constants as \code{scaling.consts} when \code{scaling.consts} is NULL. Each row is a spike-in genes and each column is a cell. The number and order of the columns should be the same as the number and order of the columns of \code{count.matrix}.}
 
@@ -42,7 +42,8 @@ runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
 \item{control}{settings see {\code{\link{DESCEND.control}}}}
 }
 \value{
-a list of DESCEND objects. The length of the list is the same as the number of genes. NA if the gene is too sparse or DESCEND fails to find a solution.
+a list of DESCEND objects. The length of the list is the same as the number of genes. 
+See also \code{\link{DESCEND}}. NA if the gene is too sparse or DESCEND fails to find a solution.
 }
 \description{
 Apply DESCEND to deconvolve the true expression level distribution for every geneand calculate relavant distribution measurements. Parallel computing is allowed. For deconvolution of two or more cell populations, see \code{\link{descendMultiPop}}. For model details, see \code{\link{deconvG}}.

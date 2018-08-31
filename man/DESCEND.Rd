@@ -10,7 +10,7 @@ The DESCEND class is a container to store the DESCEND result for a single gene.
 \section{Slots}{
 
 \describe{
-\item{\code{distribution}}{The distribution of the deconvolved distribution with relative statistics}
+\item{\code{distribution}}{The distribution of the deconvolved distribution with relative statistics. \code{theta} are the discretized values, \code{g} are the probability at these values and \code{SE.g} is the standard deviation of these density estimates. \code{G} are the accumlated probabilities at these values and \code{SE.G} are the corresponding standard errors.}
 \item{\code{estimates}}{The matrix of distribution measurements and coefficients estimated values, bias, standard deviation and mean square error (named as \code{DESCEND.sd})}
 \item{\code{pval}}{The p values of the likelihood ratio tests if computed}
 \item{\code{density.points}}{Smoothed version of the distribution for easier plotting of the distribution}

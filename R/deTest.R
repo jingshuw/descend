@@ -135,7 +135,7 @@ descendMultiPop <- function(count.matrix,
                                                 family = family, NB.size = NB.size,
                                                 verbose = verbose, show.message = show.message,
                                                 control = control)
-                              save(result, file = paste("temp/DESCEND_result_", str, ".rda", sep = ""))
+                              saveRDS(result, file = paste("temp/DESCEND_result_", str, ".rds", sep = ""))
                               rm(result)
                               gc()
                               print(paste("Results for", str, "saved."))
@@ -143,7 +143,7 @@ descendMultiPop <- function(count.matrix,
                             })
 
   result.list <- lapply(levels(labels), function(str) {
-                             load(paste("temp/DESCEND_result_", str, ".rda", sep = ""))
+                             result <- readRDS(paste("temp/DESCEND_result_", str, ".rds", sep = ""))
                              return(result)
                             }) 
 
