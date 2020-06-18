@@ -7,8 +7,8 @@
 runDescend(count.matrix, ercc.matrix = NULL, scaling.consts = NULL,
   Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL, type = "FORK",
   do.LRT.test = F, family = c("Poisson", "Negative Binomial"),
-  NB.size = NULL, show.message = T, verbose = T, ercc.trueMol = NULL,
-  control = list())
+  NB.size = NULL, show.message = T, verbose = T,
+  ercc.trueMol = NULL, control = list(max.sparse = c(0.99, 20)))
 }
 \arguments{
 \item{count.matrix}{the observed UMI count matrix. It should be an R object of class \code{matrix} or \code{dgeMatrix}. Each row is a gene and each column is a cell. The column sums (which should be the library sizes) are used as the input for \code{scaling.consts} when both \code{ercc.matrix} and \code{scaling.consts} are NULL.}

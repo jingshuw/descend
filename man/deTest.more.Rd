@@ -4,10 +4,11 @@
 \alias{deTest.more}
 \title{Add more permuted genes for differential testing of the distribution measurements between two cell populations}
 \usage{
-deTest.more(descend.multipop.output, deTest.output, de.pair.names, count.matrix,
-  labels, N.more.genes = 10000, alternative = c("two.sided", "less",
-  "greater"), n.cores = 1, cl = NULL, type = "FORK", verbose = T,
-  show.message = T, params = NULL, compare.covariates = T)
+deTest.more(descend.multipop.output, deTest.output, de.pair.names,
+  count.matrix, labels, N.more.genes = 10000,
+  alternative = c("two.sided", "less", "greater"), n.cores = 1,
+  cl = NULL, type = "FORK", verbose = T, show.message = T,
+  params = NULL, compare.covariates = T)
 }
 \arguments{
 \item{descend.multipop.output}{the returned value of \code{\link{descendMultiPop}}}

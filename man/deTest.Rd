@@ -5,8 +5,8 @@
 \title{Perform differential testing of the distribution measurements between two cell populations}
 \usage{
 deTest(descend.multipop.output, de.pair.names, count.matrix, labels,
-  N.genes.null = 10000, alternative = c("two.sided", "less", "greater"),
-  n.cores = 1, cl = NULL, type = "FORK", verbose = T,
+  N.genes.null = 10000, alternative = c("two.sided", "less",
+  "greater"), n.cores = 1, cl = NULL, type = "FORK", verbose = T,
   show.message = T, params = NULL, compare.covariates = T)
 }
 \arguments{

@@ -6,10 +6,12 @@
 \usage{
 DESCEND.control(n.points = 50, nStart = 2, nStart.lrt = 2,
   max.sparse = c(0.99, 20), LRT.Z.select = T, LRT.Z0.select = T,
-  LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T, only.integer = F,
-  rel.info.range = c(5e-04, 0.01), rel.info.guide = 0.005, c0.start = 1,
-  aStart = 1, bStart = 0, gStart = 0, start.sd = 0.2, penalty.Z0 = T,
-  pDegree = 5, max.c0.iter = 5, c0.min = 1e-05)
+  LRT.Z.values = 0, zeroInflate = T, dense.add.0 = T,
+  only.integer = F, discrete.quantile.max = 0.98,
+  rel.info.range = c(5e-04, 0.01), rel.info.guide = 0.005,
+  c0.start = 1, aStart = 1, bStart = 0, gStart = 0,
+  start.sd = 0.2, penalty.Z0 = T, pDegree = 5, max.c0.iter = 5,
+  c0.min = 1e-05)
 }
 \arguments{
 \item{n.points}{number of discritized points of the underlying true expression distribution. Default is 50}
@@ -31,6 +33,8 @@ DESCEND.control(n.points = 50, nStart = 2, nStart.lrt = 2,
 \item{dense.add.0}{whether smooth the density at 0 into \code{density.points} in the output DESCEND object}
 
 \item{only.integer}{whether set the discrete points to be integers. Default is FALSE}
+
+\item{discrete.quantile.max}{The maximum quantile of the observed distribution used to build discrete points for the deconvolved distribution}
 
 \item{rel.info.range}{the relative information range allowed for finding the optimal tuning parameter \code{c0}}
 

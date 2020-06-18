@@ -49,7 +49,7 @@ deconvSingle <- function(y,
 
   temp <- y/exp(offset)
   if (mean(temp == 0) < 0.95)
-    lam.max <- quantile(temp, probs = 0.98)
+    lam.max <- quantile(temp, probs = control$discrete.quantile.max)
   else
     lam.max <- quantile(temp[temp > 0], probs = 0.8)
   if (control$only.integer) {
@@ -378,6 +378,7 @@ deconvSingle <- function(y,
 #' @param zeroInflate whether to include the zero inflation part to the deconvolved distribution. Default is TRUE
 #' @param dense.add.0 whether smooth the density at 0 into \code{density.points} in the output DESCEND object
 #' @param only.integer whether set the discrete points to be integers. Default is FALSE
+#' @param discrete.quantile.max The maximum quantile of the observed distribution used to build discrete points for the deconvolved distribution
 #' @param rel.info.range the relative information range allowed for finding the optimal tuning parameter \code{c0}
 #' @param rel.info.guide one parameter inside the \code{rel.info.range} controling for the searching process of \code{c0}
 #' @param c0.start the starting value of \code{c0}. Default is 1
@@ -402,6 +403,7 @@ DESCEND.control <- function(n.points = 50,
                             zeroInflate = T,
                             dense.add.0 = T,
                             only.integer = F,
+							discrete.quantile.max = 0.98,
                             rel.info.range = c(0.0005, 0.01),
                             rel.info.guide = 0.005,
                             c0.start = 1,

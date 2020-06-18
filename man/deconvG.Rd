@@ -6,8 +6,8 @@
 \usage{
 deconvG(tau, X, offset, family = c("Poisson", "Negative Binomial"),
   ignoreZero = F, zeroInflate = F, Z = NULL, Z0 = NULL, c0 = 1,
-  NB.size = 100, only.value = F, pDegree = 5, aStart = 1, bStart = 0,
-  gStart = 0, ...)
+  NB.size = 100, only.value = F, pDegree = 5, aStart = 1,
+  bStart = 0, gStart = 0, ...)
 }
 \arguments{
 \item{tau}{log of the discrete points of the deconvolved distribution}

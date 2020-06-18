@@ -54,12 +54,13 @@ runDescend <- function(count.matrix,
                        show.message = T,
                        verbose = T, 
                        ercc.trueMol = NULL,
-                       control = list()) {
+                       control = list(max.sparse = c(0.99, 20))) {
 
   control <- do.call("DESCEND.control", control)
   if (family == "Negative Binomial" && is.null(NB.size))
     stop("If the Negative Binomial distribution is chosen as the technical noise distribution, then NB.size (1/over-dispersion) parameter must be first estimated from ERCC spike-ins!")
 
+  #Y <- as(count.matrix, "sparseMatrix")
   Y <- as.matrix(count.matrix)
   gene.names <- rownames(Y)
   if (sum(is.na(Y)) > 0)
@@ -92,9 +93,16 @@ runDescend <- function(count.matrix,
     }
   }
 
+  sparsity <- rowSums(Y == 0)
+  sparse.genes <- sparsity > control$max.sparse[1] * ncol(Y) | 
+	  sparsity > ncol(Y) - control$max.sparse[2]
+
+  if (sum(!sparse.genes) == 0)
+	  stop("All genes are too sparse to perform deconvolution. DESCEND not run!!")
   if (show.message) {
-    print(paste("DESCEND starts deconvolving distribution of", 
-                nrow(Y), "genes!"))
+	  print(paste(sum(sparse.genes), "genes are too sparse to perform deconvolution. Will return NA for these genes"))
+    print(paste("DESCEND starts deconvolving distribution of the rest", 
+                sum(!sparse.genes), "genes!"))
 
     print("Estimating the time to finish this task ...")
   }
@@ -103,30 +111,31 @@ runDescend <- function(count.matrix,
     n.cores <- length(parallel::clusterCall(cl, print, 1))
   }
 
-  for (iter in 1:10) {
-    if (iter == 10) {
-      print("Cannot estimate the time to finish, the program continues. If you want get an estimated time, please filter out sparse genes first ...")
-      break
-    }
-    idx <- sample(1:nrow(Y), min(5, nrow(Y)))
-    tt <- system.time(temp <- apply(Y[idx, , drop = F], 1, function(v) {
-                                    try(deconvSingle(v,
-                                                     scaling.consts = scaling.consts,
-                                                     Z = Z, Z0 = Z0,
-                                                     plot.density = F,
-                                                     do.LRT.test = do.LRT.test,
-                                                     family = family, 
-                                                     NB.size = NB.size,
-                                                     control = control, verbose = F), silent = T)}))
-    if (sum(sapply(temp, function(ll)class(ll) != "DESCEND")) != min(5, nrow(Y)))
-      break
-  }
+#  for (iter in 1:10) {
+#    if (iter == 10) {
+#      print("Cannot estimate the time to finish, the program continues. If you want get an estimated time, please filter out sparse genes first ...")
+#      break
+#    }
+  idx <- sample(which(!sparse.genes), min(10, sum(!sparse.genes)))
+  tt <- system.time(temp <- apply(Y[idx, , drop = F], 1, function(v) {
+									  try(deconvSingle(v,
+													   scaling.consts = scaling.consts,
+													   Z = Z, Z0 = Z0,
+													   plot.density = F,
+													   do.LRT.test = do.LRT.test,
+													   family = family, 
+													   NB.size = NB.size,
+													   control = control, verbose = F), silent = T)}))
+ # if (sum(sapply(temp, function(ll)class(ll) != "DESCEND")) != min(5, nrow(Y)))
+ #     break
+ # }
 
-  if (show.message && (iter < 10))
-    print(paste("Estimated total time is", 
-                ceiling(tt[3]/sum(sapply(temp, 
-                                         function(ll)class(ll) == "DESCEND")) * nrow(Y)/60), 
-                "minutes without parallization!"))
+  if (show.message) {
+	  est.time <- tt[3]/min(10, sum(!sparse.genes)) * 
+						  sum(!sparse.genes)/60
+	  print(paste("Estimated total time is", ceiling(est.time), 
+				  "minutes without parallization!"))
+  }
 
 #  if (is.null(cl)) {
     requireNamespace("doParallel")
@@ -139,11 +148,11 @@ runDescend <- function(count.matrix,
       else
         cl <- makeCluster(n.cores, type = type)
       if (verbose && show.message)
-        print(paste("log outputs are stored in file", outfile))
+        print(paste("log outputs are stored in file", outfile, "for debugging if there are any errors."))
     }
 
     if (show.message)
-      print(paste(n.cores, "cores are used in parallel."))
+      print(paste(n.cores, "cores are used in parallel. Estimated computational time with parallization is", ceiling(est.time/n.cores) + 1, "minites. Please wait ..."))
 
     registerDoParallel(cl)
     results <-  foreach(v = iter(Y, "row"),

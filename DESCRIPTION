@@ -8,4 +8,4 @@ Imports: doParallel, methods, quantreg, splines, stats, foreach, iterators
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1

@@ -5,8 +5,8 @@
 \title{DESCEND applied to two or more cell populations}
 \usage{
 descendMultiPop(count.matrix, labels, ercc.matrix = NULL,
-  scaling.consts = NULL, Z = NULL, Z0 = NULL, n.cores = 1, cl = NULL,
-  type = "FORK", do.LRT.test = F, family = c("Poisson",
+  scaling.consts = NULL, Z = NULL, Z0 = NULL, n.cores = 1,
+  cl = NULL, type = "FORK", do.LRT.test = F, family = c("Poisson",
   "Negative Binomial"), NB.size = 100, show.message = T, verbose = T,
   ercc.trueMol = NULL, center.Z0 = T, control = list())
 }
