@@ -52,6 +52,7 @@ deconvSingle <- function(y,
     lam.max <- quantile(temp, probs = control$discrete.quantile.max)
   else
     lam.max <- quantile(temp[temp > 0], probs = 0.8)
+  
   if (control$only.integer) {
     if (lam.max <= control$n.points)
       tau <- log(1:ceiling(lam.max))
@@ -426,7 +427,8 @@ DESCEND.control <- function(n.points = 50,
        aStart = aStart, bStart = bStart, gStart = gStart, start.sd = start.sd,
        penalty.Z0 = penalty.Z0, pDegree = pDegree, max.c0.iter = max.c0.iter,
        c0.min = c0.min,
-       LRT.Z.select = LRT.Z.select, 
+  	   discrete.quantile.max = discrete.quantile.max,
+  	   LRT.Z.select = LRT.Z.select, 
        LRT.Z0.select = LRT.Z0.select,
        LRT.Z.values = LRT.Z.values,
        zeroInflate = zeroInflate, 

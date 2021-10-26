@@ -18,19 +18,19 @@
 #'  result.multi <- descendMultiPop(zeisel$count.matrix.small,
 #'                                  labels = zeisel$labels,
 #'                                  scaling.consts = zeisel$library.size,
-#'                                  Z0 = log(zeisel$cell.size), verbose = FALSE, show.message = FALSE,
+#'                                  Z0 = log(zeisel$cell.size), verbose = TRUE, show.message = TRUE,
 #'                                  n.cores = 3)
 #'  ## try 100 null genes first
 #'  detest.result <- deTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
 #'                          zeisel$count.matrix.small, zeisel$labels,
-#'                          verbose = FALSE, show.message = FALSE,
+#'                          verbose = TRUE, show.message = TRUE,
 #'                          N.genes.null = 100, n.cores = 3)
 #'  
 #'  ## 100 null genes may not get small enough p-values
 #'  detest.result <- deTest.more(result.multi, detest.result, 
 #'                               c("endothelial-mural", "pyramidal CA1"),
 #'                               zeisel$count.matrix.small, labels = zeisel$labels, 
-#'                               N.more.genes = 200, verbose = FALSE, 
+#'                               N.more.genes = 200, verbose = TRUE, 
 #'                               n.cores = 3)
 #'  
 #'  layout(matrix(1:4, nrow = 2))
@@ -125,7 +125,7 @@ descendMultiPop <- function(count.matrix,
                               else
                                 Z0.temp <- NULL
 
-                              result <- runDescend(count.matrix[, idx, drop = F],
+							  result <- runDescend(count.matrix[, idx, drop = F],
                                                 ercc.matrix = NULL,
                                                 scaling.consts = scaling.consts.temp,
                                                 Z = Z.temp,
@@ -135,7 +135,7 @@ descendMultiPop <- function(count.matrix,
                                                 family = family, NB.size = NB.size,
                                                 verbose = verbose, show.message = show.message,
                                                 control = control)
-                              saveRDS(result, file = paste("temp/DESCEND_result_", str, ".rds", sep = ""))
+							  saveRDS(result, file = paste("temp/DESCEND_result_", str, ".rds", sep = ""))
                               rm(result)
                               gc()
                               print(paste("Results for", str, "saved."))
