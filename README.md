@@ -67,12 +67,12 @@ install_github("jingshuw/descend")
   de.scores1 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
                           detest.result, measurement.name = "Gini", alpha = 0.05)
   de.scores2 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                          detest.result, measurement.name = "Active Intensity", 
+                          detest.result, measurement.name = "Nonzero Intensity", 
                           alpha = 0.05, log = "xy")
   de.scores3 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                          detest.result, measurement.name = "Active Fraction", alpha = 0.1)
+                          detest.result, measurement.name = "Nonzero Fraction", alpha = 0.1)
   de.scores4 <- plotDeTest(result.multi, c("endothelial-mural", "pyramidal CA1"),
-                          detest.result, measurement.name = "Z0 Adjusted Active Fraction", alpha = 0.1)
+                          detest.result, measurement.name = "Z0 Adjusted Nonzero Fraction", alpha = 0.1)
 ```
 
 ## More case study examples: 
